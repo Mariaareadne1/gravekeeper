@@ -1,0 +1,22 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "GraveKeeperReadOnlyInventory",
+      "Effect": "Allow",
+      "Action": [
+        "iam:ListUsers",
+        "iam:ListAccessKeys",
+        "iam:GetAccessKeyLastUsed",
+        "iam:ListUserTags",
+        "iam:ListAttachedUserPolicies",
+        "iam:ListUserPolicies",
+        "iam:ListRoles",
+        "iam:GetRole",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListRolePolicies"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
