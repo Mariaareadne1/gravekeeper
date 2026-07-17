@@ -432,15 +432,18 @@ function SiteFooter() {
           A solo project — early and actively building. Read-only by design.
         </p>
         <nav className="flex gap-4 text-sm font-medium text-dusk">
+          <Link href="/about" className="hover:text-ink">
+            About
+          </Link>
           <Link href="/demo" className="hover:text-ink">
             Demo
           </Link>
           <Link href="/scan" className="hover:text-ink">
             Scan
           </Link>
-          <a href="#trust" className="hover:text-ink">
+          <Link href="/docs/threat-model" className="hover:text-ink">
             Trust
-          </a>
+          </Link>
         </nav>
       </div>
     </footer>
