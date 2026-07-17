@@ -68,6 +68,10 @@ export async function setReview(
   return handle<Finding>(resp);
 }
 
+export function exportUrl(scanId: string, format: "json" | "csv"): string {
+  return `${API_BASE}/scan/${scanId}/export?format=${format}`;
+}
+
 // A relative "214 days ago" helper for last-activity columns.
 export function relativeDays(iso: string | null): { text: string; days: number | null } {
   if (!iso) return { text: "never used", days: null };

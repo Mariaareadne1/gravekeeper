@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { AgentRecord, Finding, ReasonCode, ScanResult } from "@/lib/types";
 import { REASON_LABELS } from "@/lib/types";
-import { relativeDays, setReview } from "@/lib/api";
+import { exportUrl, relativeDays, setReview } from "@/lib/api";
 import ZombieMascot from "./ZombieMascot";
 
 type Filter = "all" | "zombies" | "healthy";
@@ -51,6 +51,7 @@ export default function ResultsDashboard({ initial }: { initial: ScanResult }) {
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       <SummaryBar
+        scanId={scan.scan_id}
         label={scan.environment_label}
         zombies={scan.zombie_candidates}
         healthy={healthy}
@@ -130,11 +131,13 @@ export default function ResultsDashboard({ initial }: { initial: ScanResult }) {
 }
 
 function SummaryBar({
+  scanId,
   label,
   zombies,
   healthy,
   total,
 }: {
+  scanId: string;
   label: string;
   zombies: number;
   healthy: number;
@@ -142,7 +145,23 @@ function SummaryBar({
 }) {
   return (
     <div className="rounded-2xl border border-zombie-light/50 bg-white/70 p-6">
-      <div className="text-sm text-dusk">{label}</div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="text-sm text-dusk">{label}</div>
+        <div className="flex gap-2">
+          <a
+            href={exportUrl(scanId, "csv")}
+            className="rounded-full border border-zombie-light px-3 py-1 text-xs font-semibold text-dusk hover:bg-zombie-wash"
+          >
+            Export CSV
+          </a>
+          <a
+            href={exportUrl(scanId, "json")}
+            className="rounded-full border border-zombie-light px-3 py-1 text-xs font-semibold text-dusk hover:bg-zombie-wash"
+          >
+            Export JSON
+          </a>
+        </div>
+      </div>
       <h1 className="mt-1 font-display text-3xl font-bold sm:text-4xl">
         {zombies > 0 ? (
           <>
