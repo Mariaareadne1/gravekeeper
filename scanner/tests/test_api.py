@@ -89,6 +89,29 @@ def test_invalid_review_state_rejected(client):
     assert resp.status_code == 400
 
 
+def test_export_json_and_csv(client):
+    scan_id = client.post("/scan", json={"synthetic": True}).json()["scan_id"]
+
+    j = client.get(f"/scan/{scan_id}/export", params={"format": "json"})
+    assert j.status_code == 200
+    assert j.headers["content-type"].startswith("application/json")
+    assert "attachment" in j.headers["content-disposition"]
+    assert len(j.json()["findings"]) == 30
+
+    c = client.get(f"/scan/{scan_id}/export", params={"format": "csv"})
+    assert c.status_code == 200
+    assert c.headers["content-type"].startswith("text/csv")
+    lines = c.text.strip().splitlines()
+    assert lines[0].startswith("id,source,type")
+    assert len(lines) == 31  # header + 30 identities
+
+
+def test_gcp_and_azure_scans_return_400(client):
+    for connector in ("gcp", "azure"):
+        resp = client.post("/scan", json={"connector": connector, "credentials": {}})
+        assert resp.status_code == 400
+
+
 def test_aws_scan_with_bad_creds_returns_400(client):
     # No real AWS creds → the connector's validate step should surface a 400,
     # not a 500. (boto3 will fail to authenticate against the real endpoint.)
