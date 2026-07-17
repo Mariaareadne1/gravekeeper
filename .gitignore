@@ -1,3 +1,6 @@
+# Local planning notes (not part of the shipped project)
+BUILD_PLAN.md
+
 # Environment / secrets
 .env
 .env.*
@@ -14,7 +17,6 @@ venv/
 .DS_Store
 .idea/
 .vscode/
-.claude/
 
 # Next.js / build output
 .next/
