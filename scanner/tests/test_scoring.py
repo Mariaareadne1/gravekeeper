@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from gravekeeper.models import AgentRecord, IdentityType, OwnerStatus, ReasonCode, Source
 from gravekeeper.scoring import RecommendedAction, Thresholds, score
 
-NOW = datetime(2026, 7, 16, tzinfo=timezone.utc)
+NOW = datetime(2026, 7, 16, tzinfo=UTC)
 
 
 def _rec(**kw):

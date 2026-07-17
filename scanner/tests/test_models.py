@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -34,8 +34,8 @@ def test_agent_record_full_valid():
         source=Source.aws,
         type=IdentityType.api_key,
         display_name="legacy-metrics-key",
-        created_at=datetime(2022, 1, 1, tzinfo=timezone.utc),
-        last_activity_at=datetime(2023, 1, 1, tzinfo=timezone.utc),
+        created_at=datetime(2022, 1, 1, tzinfo=UTC),
+        last_activity_at=datetime(2023, 1, 1, tzinfo=UTC),
         owner="jdoe",
         owner_status=OwnerStatus.disabled,
         scopes=["s3:*", "iam:List*"],
@@ -77,7 +77,7 @@ def test_finding_valid():
 def test_scan_result_round_trips_through_json():
     result = ScanResult(
         scan_id="scan-abc",
-        started_at=datetime(2026, 7, 16, tzinfo=timezone.utc),
+        started_at=datetime(2026, 7, 16, tzinfo=UTC),
         environment_label="unit-test",
         source=Source.synthetic,
         total_identities=1,

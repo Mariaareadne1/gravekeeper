@@ -49,7 +49,8 @@ def test_synthetic_pipeline_precision_and_recall(capsys):
             got = {r.value for r in f.reasons}
             if got != expected["expected_reasons"]:
                 reason_mismatches.append(
-                    f"{agent_id}: expected {sorted(expected['expected_reasons'])}, got {sorted(got)}"
+                    f"{agent_id}: expected "
+                    f"{sorted(expected['expected_reasons'])}, got {sorted(got)}"
                 )
         elif predicted and not actual:
             fp += 1

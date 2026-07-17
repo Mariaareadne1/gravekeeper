@@ -6,6 +6,8 @@ connector normalizes them into the AgentRecords we expect.
 
 from __future__ import annotations
 
+from datetime import UTC
+
 import boto3
 import pytest
 from moto import mock_aws
@@ -22,7 +24,10 @@ def iam():
 
         # moto doesn't preload AWS-managed policies, so create customer-managed
         # ones with the same names the connector reports as scopes.
-        allow_all = '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"*","Resource":"*"}]}'
+        allow_all = (
+            '{"Version":"2012-10-17","Statement":'
+            '[{"Effect":"Allow","Action":"*","Resource":"*"}]}'
+        )
         admin_arn = client.create_policy(
             PolicyName="AdministratorAccess", PolicyDocument=allow_all
         )["Policy"]["Arn"]
@@ -96,13 +101,13 @@ def test_access_key_record_belongs_to_user(iam):
 def test_discovered_admin_user_scores_as_overprivileged_when_dormant(iam):
     # moto keys/users have no last-used activity, so they read as never-used.
     # Combined with an old-enough creation date this should score as a zombie.
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     conn = AWSConnector(client=iam)
     records = conn.discover()
     legacy = next(r for r in records if r.id == "aws:user:legacy-batch")
     # Pretend it was created a year ago so "never used but old" applies.
-    legacy.created_at = datetime.now(timezone.utc) - timedelta(days=365)
+    legacy.created_at = datetime.now(UTC) - timedelta(days=365)
     f = score(legacy)
     assert f.is_zombie_candidate is True
 
