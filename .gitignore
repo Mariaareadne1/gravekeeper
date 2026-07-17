@@ -1,0 +1,36 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+.claude/
+
+# Next.js / build output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Python
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local scan database fallback
+scanner/*.db
+scanner/local_scans.json
+
+# Logs
+*.log
