@@ -1,0 +1,178 @@
+{
+  "environment_label": "northwind-labs (sample environment)",
+  "reference_now": "2026-07-16T00:00:00Z",
+  "notes": "Dates are stored as *_days_ago relative to reference_now so the fixture stays readable and the pipeline test is deterministic. expected_zombie / expected_reasons are the ground-truth answer key; the SyntheticConnector ignores them when producing AgentRecords.",
+  "identities": [
+    {
+      "id": "aws-h1", "source": "aws", "type": "service_account", "display_name": "prod-api-gateway",
+      "created_days_ago": 700, "last_activity_days_ago": 2, "owner": "platform-team", "owner_status": "active",
+      "scopes": ["execute-api:Invoke"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "gh-h2", "source": "github", "type": "oauth_app", "display_name": "ci-deploy-bot",
+      "created_days_ago": 600, "last_activity_days_ago": 5, "owner": "platform-team", "owner_status": "active",
+      "scopes": ["repo:status", "read:packages"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "aws-h3", "source": "aws", "type": "service_account", "display_name": "s3-backup-runner",
+      "created_days_ago": 400, "last_activity_days_ago": 10, "owner": "sre", "owner_status": "active",
+      "scopes": ["s3:GetObject", "s3:PutObject"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "gh-h4", "source": "github", "type": "automation", "display_name": "dependabot",
+      "created_days_ago": 300, "last_activity_days_ago": 1, "owner": "platform-team", "owner_status": "active",
+      "scopes": ["read:packages"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "aws-h5", "source": "aws", "type": "api_key", "display_name": "metrics-collector",
+      "created_days_ago": 500, "last_activity_days_ago": 20, "owner": "observability", "owner_status": "active",
+      "scopes": ["cloudwatch:PutMetricData"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "aws-h6", "source": "aws", "type": "service_account", "display_name": "payments-processor",
+      "created_days_ago": 900, "last_activity_days_ago": 3, "owner": "payments", "owner_status": "active",
+      "scopes": ["AdministratorAccess"], "expected_zombie": false, "expected_reasons": [],
+      "note": "Broad scope but actively used and owned — must NOT be flagged as overprivileged zombie."
+    },
+    {
+      "id": "gh-h7", "source": "github", "type": "oauth_app", "display_name": "slack-notifier",
+      "created_days_ago": 250, "last_activity_days_ago": 7, "owner": "eng-productivity", "owner_status": "active",
+      "scopes": ["read:org"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "aws-h8", "source": "aws", "type": "service_account", "display_name": "log-shipper",
+      "created_days_ago": 350, "last_activity_days_ago": 14, "owner": "sre", "owner_status": "active",
+      "scopes": ["logs:PutLogEvents"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "gh-h9", "source": "github", "type": "automation", "display_name": "release-drafter",
+      "created_days_ago": 200, "last_activity_days_ago": 4, "owner": "platform-team", "owner_status": "active",
+      "scopes": ["contents:read"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "aws-h10", "source": "aws", "type": "api_key", "display_name": "cdn-purge-key",
+      "created_days_ago": 450, "last_activity_days_ago": 30, "owner": "frontend", "owner_status": "active",
+      "scopes": ["cloudfront:CreateInvalidation"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "gh-h11", "source": "github", "type": "service_account", "display_name": "docs-publisher",
+      "created_days_ago": 180, "last_activity_days_ago": 45, "owner": "docs", "owner_status": "active",
+      "scopes": ["contents:write"], "expected_zombie": false, "expected_reasons": []
+    },
+    {
+      "id": "aws-e1", "source": "aws", "type": "agent", "display_name": "new-onboarding-agent",
+      "created_days_ago": 5, "last_activity_days_ago": null, "owner": "hr-tools", "owner_status": "active",
+      "scopes": ["ses:SendEmail"], "expected_zombie": false, "expected_reasons": [],
+      "note": "Brand new, never used yet — the classic false positive to avoid."
+    },
+    {
+      "id": "aws-e2", "source": "aws", "type": "automation", "display_name": "quarterly-tax-export",
+      "created_days_ago": 800, "last_activity_days_ago": 100, "owner": "finance", "owner_status": "active",
+      "scopes": ["s3:GetObject"], "expected_zombie": false, "expected_reasons": [],
+      "note": "Legit quarterly job, owned and last run 100 days ago — borderline, must NOT be flagged."
+    },
+    {
+      "id": "gh-e3", "source": "github", "type": "api_key", "display_name": "recent-integration-token",
+      "created_days_ago": 40, "last_activity_days_ago": null, "owner": "partnerships", "owner_status": "active",
+      "scopes": ["repo:status"], "expected_zombie": false, "expected_reasons": [],
+      "note": "Created recently, not used yet — still within grace period."
+    },
+
+    {
+      "id": "aws-z1", "source": "aws", "type": "service_account", "display_name": "billing-reconciler",
+      "created_days_ago": 500, "last_activity_days_ago": 214, "owner": "former-eng", "owner_status": "disabled",
+      "scopes": ["AdministratorAccess"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "OWNER_DISABLED", "OVERPRIVILEGED"]
+    },
+    {
+      "id": "aws-z2", "source": "aws", "type": "api_key", "display_name": "old-migration-key",
+      "created_days_ago": 600, "last_activity_days_ago": 300, "owner": "left-employee", "owner_status": "disabled",
+      "scopes": ["dynamodb:GetItem"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "OWNER_DISABLED"]
+    },
+    {
+      "id": "gh-z3", "source": "github", "type": "oauth_app", "display_name": "contractor-webhook",
+      "created_days_ago": 400, "last_activity_days_ago": 200, "owner": "ex-contractor", "owner_status": "disabled",
+      "scopes": ["repo:status"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "OWNER_DISABLED"]
+    },
+    {
+      "id": "aws-z4", "source": "aws", "type": "service_account", "display_name": "analytics-etl-old",
+      "created_days_ago": 550, "last_activity_days_ago": 190, "owner": "departed-analyst", "owner_status": "disabled",
+      "scopes": ["s3:*"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "OWNER_DISABLED", "OVERPRIVILEGED"]
+    },
+    {
+      "id": "gh-z5", "source": "github", "type": "automation", "display_name": "legacy-ci-runner",
+      "created_days_ago": 700, "last_activity_days_ago": 250, "owner": "former-devops", "owner_status": "disabled",
+      "scopes": ["contents:read"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "OWNER_DISABLED"]
+    },
+    {
+      "id": "aws-z6", "source": "aws", "type": "api_key", "display_name": "founder-personal-key",
+      "created_days_ago": 1000, "last_activity_days_ago": 220, "owner": "cofounder-gone", "owner_status": "disabled",
+      "scopes": ["*"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "OWNER_DISABLED", "OVERPRIVILEGED"]
+    },
+    {
+      "id": "aws-z7", "source": "aws", "type": "service_account", "display_name": "seasonal-importer",
+      "created_days_ago": 800, "last_activity_days_ago": 240, "owner": "data-team", "owner_status": "active",
+      "scopes": ["s3:GetObject"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D"]
+    },
+    {
+      "id": "gh-z8", "source": "github", "type": "oauth_app", "display_name": "abandoned-analytics",
+      "created_days_ago": 500, "last_activity_days_ago": 210, "owner": "growth-team", "owner_status": "active",
+      "scopes": ["read:org"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D"]
+    },
+    {
+      "id": "aws-z9", "source": "aws", "type": "api_key", "display_name": "forgotten-cron-key",
+      "created_days_ago": 650, "last_activity_days_ago": 280, "owner": "eng", "owner_status": "active",
+      "scopes": ["lambda:InvokeFunction"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D"]
+    },
+    {
+      "id": "aws-z10", "source": "aws", "type": "service_account", "display_name": "old-staging-agent",
+      "created_days_ago": 450, "last_activity_days_ago": 200, "owner": "qa", "owner_status": "active",
+      "scopes": ["iam:*"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "OVERPRIVILEGED"]
+    },
+    {
+      "id": "aws-z11", "source": "aws", "type": "api_key", "display_name": "unused-admin-key",
+      "created_days_ago": 320, "last_activity_days_ago": null, "owner": "ops", "owner_status": "active",
+      "scopes": ["AdministratorAccess"], "expected_zombie": true,
+      "expected_reasons": ["NEVER_USED_BUT_OLD", "OVERPRIVILEGED"]
+    },
+    {
+      "id": "aws-z12", "source": "aws", "type": "service_account", "display_name": "break-glass-root",
+      "created_days_ago": 500, "last_activity_days_ago": null, "owner": "security", "owner_status": "active",
+      "scopes": ["*"], "expected_zombie": true,
+      "expected_reasons": ["NEVER_USED_BUT_OLD", "OVERPRIVILEGED"]
+    },
+    {
+      "id": "gh-z13", "source": "github", "type": "oauth_app", "display_name": "never-authorized-app",
+      "created_days_ago": 400, "last_activity_days_ago": null, "owner": "platform", "owner_status": "active",
+      "scopes": ["admin", "repo"], "expected_zombie": true,
+      "expected_reasons": ["NEVER_USED_BUT_OLD", "OVERPRIVILEGED"]
+    },
+    {
+      "id": "aws-z14", "source": "aws", "type": "api_key", "display_name": "mystery-key",
+      "created_days_ago": 300, "last_activity_days_ago": 150, "owner": null, "owner_status": "none",
+      "scopes": ["sqs:ReceiveMessage"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "NO_OWNER"]
+    },
+    {
+      "id": "gh-z15", "source": "github", "type": "automation", "display_name": "orphan-bot",
+      "created_days_ago": 250, "last_activity_days_ago": 160, "owner": null, "owner_status": "none",
+      "scopes": ["contents:read"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "NO_OWNER"]
+    },
+    {
+      "id": "aws-z16", "source": "aws", "type": "service_account", "display_name": "ghost-owner-svc",
+      "created_days_ago": 350, "last_activity_days_ago": 120, "owner": "id-12345", "owner_status": "missing",
+      "scopes": ["s3:GetObject"], "expected_zombie": true,
+      "expected_reasons": ["NO_ACTIVITY_90D", "OWNER_MISSING"]
+    }
+  ]
+}

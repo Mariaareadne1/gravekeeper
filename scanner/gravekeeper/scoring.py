@@ -11,7 +11,7 @@ simply hasn't been used yet. Recently created + never used is expected, not dead
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from pydantic import BaseModel
 
@@ -67,9 +67,9 @@ def _is_overprivileged(scopes: list[str]) -> bool:
 def _days_between(a: datetime, b: datetime) -> float:
     # Normalize naive datetimes to UTC so subtraction never raises.
     if a.tzinfo is None:
-        a = a.replace(tzinfo=timezone.utc)
+        a = a.replace(tzinfo=UTC)
     if b.tzinfo is None:
-        b = b.replace(tzinfo=timezone.utc)
+        b = b.replace(tzinfo=UTC)
     return (a - b).total_seconds() / 86400.0
 
 
@@ -78,7 +78,7 @@ def score(
     now: datetime | None = None,
     thresholds: Thresholds | None = None,
 ) -> Finding:
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     t = thresholds or Thresholds()
 
     reasons: list[ReasonCode] = []
@@ -150,5 +150,5 @@ def score_all(
     now: datetime | None = None,
     thresholds: Thresholds | None = None,
 ) -> list[Finding]:
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     return [score(a, now=now, thresholds=thresholds) for a in agents]
