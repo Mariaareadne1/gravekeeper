@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getScan, runScan } from "@/lib/api";
 import type { ScanResult } from "@/lib/types";
@@ -10,26 +10,26 @@ import ZombieMascot from "@/components/ZombieMascot";
 export default function DemoPage() {
   const [scan, setScan] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Run the scan exactly once, even under React StrictMode's double-invoke in
+  // dev — otherwise we'd fire two concurrent scans per page view.
+  const started = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
+    if (started.current) return;
+    started.current = true;
     (async () => {
       try {
         const summary = await runScan({ synthetic: true });
         const full = await getScan(summary.scan_id);
-        if (!cancelled) setScan(full);
+        setScan(full);
       } catch (e) {
-        if (!cancelled)
-          setError(
-            e instanceof Error
-              ? e.message
-              : "Could not reach the scanner. Is the backend running on port 8000?"
-          );
+        setError(
+          e instanceof Error
+            ? e.message
+            : "Could not reach the scanner. Is the backend running on port 8000?"
+        );
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   return (
