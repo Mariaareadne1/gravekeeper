@@ -51,9 +51,7 @@ class ScanSummary(BaseModel):
 
 
 class ReviewRequest(BaseModel):
-    review_state: str | None = Field(
-        default=None, description="'review', 'keep', or null to clear"
-    )
+    review_state: str | None = Field(default=None, description="'review', 'keep', or null to clear")
 
 
 def _build_connector(req: ScanRequest) -> Connector:

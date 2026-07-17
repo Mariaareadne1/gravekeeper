@@ -95,9 +95,7 @@ class AWSConnector(Connector):
             scopes = _user_scopes(iam, username)
 
             key_dates: list[datetime] = []
-            for key in _paginate(
-                iam, "list_access_keys", "AccessKeyMetadata", UserName=username
-            ):
+            for key in _paginate(iam, "list_access_keys", "AccessKeyMetadata", UserName=username):
                 last_used = _access_key_last_used(iam, key["AccessKeyId"])
                 if last_used:
                     key_dates.append(last_used)

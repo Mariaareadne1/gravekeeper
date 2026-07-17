@@ -14,9 +14,7 @@ from pathlib import Path
 from ..models import AgentRecord, IdentityType, OwnerStatus, Source
 from .base import Connector, ConnectorError
 
-_DEFAULT_FIXTURE = (
-    Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "synthetic_env.json"
-)
+_DEFAULT_FIXTURE = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "synthetic_env.json"
 
 # Answer-key fields carried in the fixture but not part of an AgentRecord.
 _ANSWER_KEY_FIELDS = {
