@@ -42,9 +42,13 @@ class Thresholds(BaseModel):
     inactivity_days: int = 90
     candidate_cutoff: float = 0.5
     retire_cutoff: float = 0.75
+    # How many multiples of `inactivity_days` counts as "long" dead — this is
+    # what separates a truly abandoned identity from a merely dormant one.
+    long_inactivity_multiplier: float = 2.0
 
     # Signal weights.
     w_no_activity: float = 0.35
+    w_long_inactivity: float = 0.25  # extra weight once inactivity is "long"
     w_never_used_but_old: float = 0.35
     w_owner_disabled: float = 0.40
     w_owner_missing: float = 0.40
@@ -85,18 +89,23 @@ def score(
 
     # --- Inactivity signals -------------------------------------------------
     inactive = False
+    long_cutoff_days = t.inactivity_days * t.long_inactivity_multiplier
     if agent.last_activity_at is not None:
         idle_days = _days_between(now, agent.last_activity_at)
         if idle_days >= t.inactivity_days:
             reasons.append(ReasonCode.NO_ACTIVITY_90D)
             confidence += t.w_no_activity
             inactive = True
+            if idle_days >= long_cutoff_days:
+                confidence += t.w_long_inactivity
     else:
         # Never used. Only a signal if it's had time to be used and isn't brand new.
         if not is_new:
             reasons.append(ReasonCode.NEVER_USED_BUT_OLD)
             confidence += t.w_never_used_but_old
             inactive = True
+            if age_days is not None and age_days >= long_cutoff_days:
+                confidence += t.w_long_inactivity
         # else: brand-new, never-used identity — expected, not a zombie.
 
     # --- Owner signals ------------------------------------------------------
