@@ -37,3 +37,7 @@ scanner/local_registry.json
 
 # Logs
 *.log
+
+# Playwright test artifacts
+web/test-results/
+web/playwright-report/
