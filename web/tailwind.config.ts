@@ -43,16 +43,11 @@ const config: Config = {
           "92%": { transform: "scale(1)", opacity: "0.6" },
           "96%": { transform: "scale(2.2)", opacity: "0" },
         },
-        blink: {
-          "0%, 92%, 100%": { transform: "scaleY(1)" },
-          "96%": { transform: "scaleY(0.1)" },
-        },
       },
       animation: {
         drift: "drift 6s ease-in-out infinite",
         "cursor-loop": "cursor-loop 7s ease-in-out infinite",
         "click-pulse": "click-pulse 7s ease-in-out infinite",
-        blink: "blink 4s ease-in-out infinite",
       },
     },
   },

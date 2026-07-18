@@ -1,0 +1,23 @@
+{
+  // Type-checks the test suite (Vitest unit/component + Playwright e2e) with the
+  // globals the Next build config deliberately excludes. Run with:
+  //   npx tsc --noEmit -p tsconfig.test.json
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
+  },
+  "include": [
+    "next-env.d.ts",
+    "vitest.config.ts",
+    "vitest.setup.ts",
+    "playwright.config.ts",
+    "lib/**/*.ts",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "e2e/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

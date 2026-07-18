@@ -34,6 +34,45 @@ export interface AgentRecord {
   raw_metadata: Record<string, unknown>;
 }
 
+export type LifecycleState =
+  | "active"
+  | "under_review"
+  | "decommission_requested"
+  | "retired";
+
+export interface RegistryHistoryEntry {
+  changed_at: string;
+  changed_by?: string | null;
+  lifecycle_state: LifecycleState;
+  assigned_owner?: string | null;
+  owner_status_override?: OwnerStatus | null;
+  note?: string | null;
+}
+
+export interface RegistryEntry {
+  identity_key: string;
+  source: Source;
+  identity_id: string;
+  assigned_owner?: string | null;
+  owner_status_override?: OwnerStatus | null;
+  lifecycle_state: LifecycleState;
+  note?: string | null;
+  updated_by?: string | null;
+  updated_at: string;
+  history: RegistryHistoryEntry[];
+}
+
+export interface RegistryUpdate {
+  assigned_owner?: string | null;
+  owner_status_override?: OwnerStatus | null;
+  lifecycle_state?: LifecycleState;
+  note?: string | null;
+  updated_by?: string | null;
+  clear_assigned_owner?: boolean;
+  clear_note?: boolean;
+  clear_owner_status_override?: boolean;
+}
+
 export interface Finding {
   agent_id: string;
   is_zombie_candidate: boolean;
@@ -41,6 +80,7 @@ export interface Finding {
   reasons: ReasonCode[];
   recommended_action: RecommendedAction;
   review_state: string | null;
+  registry?: RegistryEntry | null;
 }
 
 export interface ScanResult {
@@ -71,4 +111,12 @@ export const REASON_LABELS: Record<ReasonCode, string> = {
   NO_OWNER: "No owner on record",
   OVERPRIVILEGED: "Broad permissions it doesn't use",
   NEVER_USED_BUT_OLD: "Created long ago, never used",
+};
+
+// Plain-language labels for lifecycle states, shown in the registry UI.
+export const LIFECYCLE_LABELS: Record<LifecycleState, string> = {
+  active: "Active",
+  under_review: "Under review",
+  decommission_requested: "Decommission requested",
+  retired: "Retired",
 };

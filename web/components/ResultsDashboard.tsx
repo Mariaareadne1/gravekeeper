@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { AgentRecord, Finding, ReasonCode, ScanResult } from "@/lib/types";
-import { REASON_LABELS } from "@/lib/types";
-import { exportUrl, relativeDays, setReview } from "@/lib/api";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { AgentRecord, Finding, ReasonCode, RegistryEntry, ScanResult } from "@/lib/types";
+import { LIFECYCLE_LABELS, REASON_LABELS } from "@/lib/types";
+import { ApiError, exportUrl, identityKeyFor, relativeDays, setReview } from "@/lib/api";
+import RegistryEditor from "./RegistryEditor";
 import ZombieMascot from "./ZombieMascot";
 
 type Filter = "all" | "zombies" | "healthy";
@@ -17,6 +18,17 @@ export default function ResultsDashboard({ initial }: { initial: ScanResult }) {
   const [scan, setScan] = useState<ScanResult>(initial);
   const [filter, setFilter] = useState<Filter>("zombies");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [markError, setMarkError] = useState<string | null>(null);
+  // Main content wrapper — made inert while the drawer is open. The filter
+  // group holds the fallback focus target for when a trigger row is gone.
+  const contentRef = useRef<HTMLDivElement>(null);
+  const filterGroupRef = useRef<HTMLDivElement>(null);
+
+  // Stable identity so the drawer's mount-scoped focus/inert effect doesn't
+  // re-run (and steal focus) on every parent re-render.
+  const focusFallback = useCallback(() => {
+    filterGroupRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+  }, []);
 
   const rows: Row[] = useMemo(() => {
     const byId = new Map(scan.records.map((r) => [r.id, r]));
@@ -35,30 +47,79 @@ export default function ResultsDashboard({ initial }: { initial: ScanResult }) {
   const healthy = scan.total_identities - scan.zombie_candidates;
 
   async function mark(agentId: string, state: "review" | "keep" | null) {
+    setMarkError(null);
+    // Snapshot only THIS finding's review_state for rollback, so a failure
+    // reverts just this mark and never clobbers a concurrent update elsewhere.
+    const previousState =
+      scan.findings.find((f) => f.agent_id === agentId)?.review_state ?? null;
+    setScan((s) => ({
+      ...s,
+      findings: s.findings.map((f) =>
+        f.agent_id === agentId ? { ...f, review_state: state } : f
+      ),
+    }));
     try {
       const updated = await setReview(scan.scan_id, agentId, state);
       setScan((s) => ({
         ...s,
         findings: s.findings.map((f) => (f.agent_id === agentId ? updated : f)),
       }));
-    } catch {
-      /* best-effort; the dashboard stays usable if the write fails */
+    } catch (err) {
+      // Revert only this finding's review_state and surface the failure.
+      setScan((s) => ({
+        ...s,
+        findings: s.findings.map((f) =>
+          f.agent_id === agentId ? { ...f, review_state: previousState } : f
+        ),
+      }));
+      setMarkError(
+        err instanceof ApiError
+          ? `Couldn't save your mark: ${err.message}`
+          : "Couldn't save your mark. Check your connection and try again."
+      );
     }
+  }
+
+  // Fold a saved registry entry back into the finding so the row badge and the
+  // drawer stay in sync without a re-scan.
+  function onRegistrySaved(agentId: string, registry: RegistryEntry) {
+    setScan((s) => ({
+      ...s,
+      findings: s.findings.map((f) =>
+        f.agent_id === agentId ? { ...f, registry } : f
+      ),
+    }));
+  }
+
+  function openDetails(agentId: string) {
+    setMarkError(null);
+    setOpenId(agentId);
+  }
+
+  function closeDrawer() {
+    setMarkError(null);
+    setOpenId(null);
   }
 
   const openRow = openId ? rows.find((r) => r.finding.agent_id === openId) : null;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
-      <SummaryBar
-        scanId={scan.scan_id}
-        label={scan.environment_label}
-        zombies={scan.zombie_candidates}
-        healthy={healthy}
-        total={scan.total_identities}
-      />
+      <div ref={contentRef}>
+        <SummaryBar
+          scanId={scan.scan_id}
+          label={scan.environment_label}
+          zombies={scan.zombie_candidates}
+          healthy={healthy}
+          total={scan.total_identities}
+        />
 
-      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <div
+          ref={filterGroupRef}
+          role="group"
+          aria-label="Filter results"
+          className="mt-6 flex flex-wrap items-center gap-2"
+        >
         <FilterTab active={filter === "zombies"} onClick={() => setFilter("zombies")}>
           Zombies ({scan.zombie_candidates})
         </FilterTab>
@@ -88,14 +149,28 @@ export default function ResultsDashboard({ initial }: { initial: ScanResult }) {
               {visible.map(({ finding, record }) => (
                 <tr
                   key={finding.agent_id}
-                  onClick={() => setOpenId(finding.agent_id)}
-                  className="cursor-pointer border-b border-zombie-light/25 last:border-0 hover:bg-zombie-wash/40"
+                  className="relative border-b border-zombie-light/25 last:border-0 hover:bg-zombie-wash/40"
                 >
                   <td className="px-4 py-3">
+                    {/* Real button overlaying the whole row: keyboard-operable
+                        natively, keeps the full-row-click feel. Table cells
+                        below carry only non-interactive display content. */}
+                    <button
+                      type="button"
+                      onClick={() => openDetails(finding.agent_id)}
+                      aria-label={`View details for ${record.display_name}`}
+                      className="absolute inset-0 z-10 h-full w-full cursor-pointer rounded-none focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zombie-dark"
+                    />
                     <div className="flex items-center gap-2 font-medium">
                       <SourceBadge source={record.source} />
                       {record.display_name}
                       {finding.review_state && <ReviewTag state={finding.review_state} />}
+                      {finding.registry &&
+                        finding.registry.lifecycle_state !== "active" && (
+                          <Chip tone="gray">
+                            {LIFECYCLE_LABELS[finding.registry.lifecycle_state]}
+                          </Chip>
+                        )}
                     </div>
                     <div className="text-xs text-dusk">{record.type.replace(/_/g, " ")}</div>
                   </td>
@@ -122,9 +197,18 @@ export default function ResultsDashboard({ initial }: { initial: ScanResult }) {
           </table>
         </div>
       )}
+      </div>
 
       {openRow && (
-        <DetailDrawer row={openRow} onClose={() => setOpenId(null)} onMark={mark} />
+        <DetailDrawer
+          row={openRow}
+          error={markError}
+          contentRef={contentRef}
+          onClose={closeDrawer}
+          onFallbackFocus={focusFallback}
+          onMark={mark}
+          onRegistrySaved={onRegistrySaved}
+        />
       )}
     </div>
   );
@@ -201,10 +285,12 @@ function FilterTab({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
         active
-          ? "bg-zombie text-white"
+          ? "bg-zombie-dark text-white"
           : "border border-zombie-light text-dusk hover:bg-zombie-wash"
       }`}
     >
@@ -215,7 +301,7 @@ function FilterTab({
 
 function SourceBadge({ source }: { source: string }) {
   return (
-    <span className="rounded bg-zombie-wash px-1.5 py-0.5 text-[10px] font-bold uppercase text-zombie-dark">
+    <span className="rounded bg-zombie-wash px-1.5 py-0.5 text-[10px] font-bold uppercase text-ink">
       {source}
     </span>
   );
@@ -241,7 +327,7 @@ function Chip({ tone, children }: { tone: "rot" | "gray" | "zombie"; children: R
     tone === "rot"
       ? "bg-rot/10 text-rot"
       : tone === "zombie"
-        ? "bg-zombie-wash text-zombie-dark"
+        ? "bg-zombie-wash text-ink"
         : "bg-dusk/10 text-dusk";
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles}`}>{children}</span>
@@ -285,16 +371,82 @@ function EmptyState({ filter }: { filter: Filter }) {
   );
 }
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 function DetailDrawer({
   row,
+  error,
+  contentRef,
   onClose,
+  onFallbackFocus,
   onMark,
+  onRegistrySaved,
 }: {
   row: Row;
+  error: string | null;
+  contentRef: React.RefObject<HTMLElement>;
   onClose: () => void;
+  onFallbackFocus: () => void;
   onMark: (agentId: string, state: "review" | "keep" | null) => void;
+  onRegistrySaved: (agentId: string, registry: RegistryEntry) => void;
 }) {
   const { finding, record } = row;
+  const asideRef = useRef<HTMLElement>(null);
+
+  // Move focus into the drawer on open, restore it to the trigger on close,
+  // keep Tab focus trapped inside, and make the page behind inert so screen
+  // readers in browse mode can't wander out of the modal.
+  useEffect(() => {
+    const trigger = document.activeElement as HTMLElement | null;
+    const content = contentRef.current;
+    // `inert` blocks focus + pointer + SR browse mode; aria-hidden is the
+    // fallback for engines that don't yet honor inert.
+    content?.setAttribute("inert", "");
+    content?.setAttribute("aria-hidden", "true");
+    asideRef.current?.focus();
+    return () => {
+      content?.removeAttribute("inert");
+      content?.removeAttribute("aria-hidden");
+      // Restore focus to the trigger, but only if it's still in the document —
+      // a re-render (e.g. a failed mark reverting a row) can detach it.
+      if (trigger && document.body.contains(trigger)) {
+        trigger.focus();
+      } else {
+        onFallbackFocus();
+      }
+    };
+  }, [contentRef, onFallbackFocus]);
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const aside = asideRef.current;
+    if (!aside) return;
+    const focusable = Array.from(
+      aside.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+    );
+    if (focusable.length === 0) {
+      e.preventDefault();
+      aside.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === aside)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-40 flex justify-end">
       <div
@@ -303,8 +455,12 @@ function DetailDrawer({
         aria-hidden="true"
       />
       <aside
+        ref={asideRef}
         role="dialog"
+        aria-modal="true"
         aria-label={`Details for ${record.display_name}`}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
         className="relative z-10 h-full w-full max-w-md overflow-y-auto bg-bone p-6 shadow-2xl"
       >
         <div className="flex items-start justify-between">
@@ -317,7 +473,7 @@ function DetailDrawer({
           </div>
           <button
             onClick={onClose}
-            className="rounded-full px-2 text-2xl text-dusk hover:text-ink"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-2xl text-dusk hover:text-ink"
             aria-label="Close"
           >
             ×
@@ -366,7 +522,7 @@ function DetailDrawer({
         <div className="mt-6 flex gap-3">
           <button
             onClick={() => onMark(finding.agent_id, "review")}
-            className="flex-1 rounded-full bg-zombie px-4 py-2 text-sm font-semibold text-white hover:bg-zombie-dark"
+            className="flex-1 rounded-full bg-zombie-dark px-4 py-2 text-sm font-semibold text-white hover:brightness-95"
           >
             Mark for review
           </button>
@@ -377,9 +533,35 @@ function DetailDrawer({
             Mark as keep
           </button>
         </div>
+        {error && (
+          <div
+            role="alert"
+            className="mt-3 rounded-lg bg-rot/10 px-3 py-2 text-sm text-rot"
+          >
+            {error}
+          </div>
+        )}
         <p className="mt-3 text-center text-xs text-dusk">
           Marking is a note to yourself. GraveKeeper never revokes or deletes anything.
         </p>
+
+        <section className="mt-6 border-t border-zombie-light/50 pt-5">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-dusk">
+            Lifecycle registry
+          </h3>
+          <p className="mt-1 text-xs text-dusk">
+            The mark above is scan-local. The registry below is durable — its owner,
+            lifecycle state, and note persist across every future scan.
+          </p>
+          <div className="mt-4">
+            <RegistryEditor
+              key={identityKeyFor(record.source, finding.agent_id)}
+              identityKey={identityKeyFor(record.source, finding.agent_id)}
+              entry={finding.registry ?? null}
+              onSaved={(entry) => onRegistrySaved(finding.agent_id, entry)}
+            />
+          </div>
+        </section>
       </aside>
     </div>
   );
