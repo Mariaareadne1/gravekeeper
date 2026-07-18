@@ -84,6 +84,56 @@ class Finding(BaseModel):
     )
 
 
+class LifecycleState(str, Enum):
+    active = "active"
+    under_review = "under_review"
+    decommission_requested = "decommission_requested"
+    retired = "retired"
+
+
+class RegistryHistoryEntry(BaseModel):
+    """A point-in-time snapshot of a registry entry, captured before an update."""
+
+    changed_at: datetime
+    changed_by: str | None = None
+    lifecycle_state: LifecycleState
+    assigned_owner: str | None = None
+    owner_status_override: OwnerStatus | None = None
+    note: str | None = None
+
+
+class RegistryEntry(BaseModel):
+    """Human-owned lifecycle/ownership record for one non-human identity.
+
+    Kept separate from Finding so the scan pipeline stays pure — this is joined
+    onto findings at the API read boundary only.
+    """
+
+    identity_key: str
+    source: Source
+    identity_id: str
+    assigned_owner: str | None = Field(default=None, max_length=256)
+    owner_status_override: OwnerStatus | None = None
+    lifecycle_state: LifecycleState = LifecycleState.active
+    note: str | None = Field(default=None, max_length=2000)
+    updated_by: str | None = Field(default=None, max_length=256)
+    updated_at: datetime
+    history: list[RegistryHistoryEntry] = Field(default_factory=list)
+
+
+class RegistryUpdate(BaseModel):
+    """Partial update to a registry entry. Unset fields are left unchanged."""
+
+    assigned_owner: str | None = Field(default=None, max_length=256)
+    owner_status_override: OwnerStatus | None = None
+    lifecycle_state: LifecycleState | None = None
+    note: str | None = Field(default=None, max_length=2000)
+    updated_by: str | None = Field(default=None, max_length=256)
+    clear_assigned_owner: bool = False
+    clear_note: bool = False
+    clear_owner_status_override: bool = False
+
+
 class ScanResult(BaseModel):
     scan_id: str
     started_at: datetime

@@ -33,6 +33,7 @@ build/
 # Local scan database fallback
 scanner/*.db
 scanner/local_scans.json
+scanner/local_registry.json
 
 # Logs
 *.log

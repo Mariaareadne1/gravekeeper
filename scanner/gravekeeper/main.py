@@ -9,6 +9,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.registry_routes import router as registry_router
 from .api.routes import router
 from .config import get_settings
 
@@ -23,11 +24,12 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PUT"],
     allow_headers=["*"],
 )
 
 app.include_router(router)
+app.include_router(registry_router)
 
 
 @app.get("/")

@@ -7,9 +7,12 @@ from gravekeeper.models import (
     AgentRecord,
     Finding,
     IdentityType,
+    LifecycleState,
     OwnerStatus,
     ReasonCode,
     RecommendedAction,
+    RegistryEntry,
+    RegistryHistoryEntry,
     ScanResult,
     Source,
 )
@@ -97,3 +100,46 @@ def test_scan_result_round_trips_through_json():
     assert restored.scan_id == "scan-abc"
     assert restored.findings[0].confidence == 0.8
     assert restored.records[0].display_name == "ghost"
+
+
+def test_registry_entry_round_trips_json():
+    entry = RegistryEntry(
+        identity_key="aws:user:jsmith",
+        source=Source.aws,
+        identity_id="aws:user:jsmith",
+        assigned_owner="jsmith",
+        owner_status_override=OwnerStatus.disabled,
+        lifecycle_state=LifecycleState.under_review,
+        note="pending offboarding",
+        updated_by="admin",
+        updated_at=datetime(2026, 7, 17, tzinfo=UTC),
+        history=[
+            RegistryHistoryEntry(
+                changed_at=datetime(2026, 7, 16, tzinfo=UTC),
+                changed_by="admin",
+                lifecycle_state=LifecycleState.active,
+            )
+        ],
+    )
+    dumped = entry.model_dump_json()
+    restored = RegistryEntry.model_validate_json(dumped)
+    assert restored.identity_key == "aws:user:jsmith"
+    assert restored.lifecycle_state is LifecycleState.under_review
+    assert restored.owner_status_override is OwnerStatus.disabled
+    assert len(restored.history) == 1
+    assert restored.history[0].lifecycle_state is LifecycleState.active
+
+
+def test_registry_entry_defaults():
+    entry = RegistryEntry(
+        identity_key="github:deploykey:owner/repo:123",
+        source=Source.github,
+        identity_id="github:deploykey:owner/repo:123",
+        updated_at=datetime(2026, 7, 17, tzinfo=UTC),
+    )
+    assert entry.assigned_owner is None
+    assert entry.owner_status_override is None
+    assert entry.lifecycle_state is LifecycleState.active
+    assert entry.note is None
+    assert entry.updated_by is None
+    assert entry.history == []

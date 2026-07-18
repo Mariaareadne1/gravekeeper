@@ -27,8 +27,9 @@ from ..connectors.base import Connector, ConnectorError
 from ..connectors.gcp import GCPConnector
 from ..connectors.github import GitHubConnector
 from ..connectors.synthetic import SyntheticConnector
-from ..models import Finding, ScanResult
+from ..models import Finding, RegistryEntry, ScanResult
 from ..pipeline import run_scan
+from ..registry import identity_key_for
 from ..storage import get_storage
 
 router = APIRouter()
@@ -52,6 +53,12 @@ class ScanSummary(BaseModel):
 
 class ReviewRequest(BaseModel):
     review_state: str | None = Field(default=None, description="'review', 'keep', or null to clear")
+
+
+class FindingView(Finding):
+    """A Finding joined with its registry entry at read time. Not persisted."""
+
+    registry: RegistryEntry | None = None
 
 
 def _build_connector(req: ScanRequest) -> Connector:
@@ -105,14 +112,28 @@ def get_scan(scan_id: str) -> ScanResult:
     return result
 
 
-@router.get("/scan/{scan_id}/findings", response_model=list[Finding])
-def get_findings(scan_id: str, zombies_only: bool = False) -> list[Finding]:
-    result = get_storage().get_scan(scan_id)
+@router.get("/scan/{scan_id}/findings", response_model=list[FindingView])
+def get_findings(scan_id: str, zombies_only: bool = False) -> list[FindingView]:
+    storage = get_storage()
+    result = storage.get_scan(scan_id)
     if result is None:
         raise HTTPException(status_code=404, detail="scan not found")
+
+    findings = result.findings
     if zombies_only:
-        return [f for f in result.findings if f.is_zombie_candidate]
-    return result.findings
+        findings = [f for f in findings if f.is_zombie_candidate]
+
+    # Join each finding with its registry entry (if any) at the read boundary.
+    records_by_id = {r.id: r for r in result.records}
+    views: list[FindingView] = []
+    for f in findings:
+        record = records_by_id.get(f.agent_id)
+        entry = None
+        if record is not None:
+            key = identity_key_for(record.source, f.agent_id)
+            entry = storage.get_registry_entry(key)
+        views.append(FindingView(**f.model_dump(), registry=entry))
+    return views
 
 
 @router.post("/scan/{scan_id}/review", response_model=Finding)

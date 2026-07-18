@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
     supabase_service_key: str = ""
 
+    # Storage backend selection: "auto" (default, falls back to local JSON) or
+    # "supabase" (requires supabase_configured). Kept in Settings so all config
+    # flows through one place rather than a stray os.getenv.
+    storage_backend: str = "auto"
+
     # API server
     api_host: str = "0.0.0.0"
     api_port: int = 8000

@@ -18,11 +18,10 @@ Credentials (per scan): {"token": "<read-only PAT>", "org": "<optional org>"}.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
 import httpx
 
 from ..models import AgentRecord, IdentityType, OwnerStatus, Source
+from ._util import parse_iso8601 as _parse
 from .base import Connector, ConnectorError
 
 _API = "https://api.github.com"
@@ -156,15 +155,6 @@ def _next_link(link_header: str | None) -> str | None:
             # Return a path relative to the base_url.
             return url.replace(_API, "")
     return None
-
-
-def _parse(value: str | None) -> datetime | None:
-    if not value:
-        return None
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(UTC)
-    except ValueError:  # pragma: no cover
-        return None
 
 
 def _coverage_note(total_repos: int) -> AgentRecord:

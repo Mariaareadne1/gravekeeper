@@ -53,6 +53,8 @@ def test_synthetic_scan_end_to_end(client):
     zlist = zombies.json()
     assert len(zlist) == 16
     assert all(f["is_zombie_candidate"] for f in zlist)
+    # Findings now carry a registry join, unpopulated by default.
+    assert all("registry" in f and f["registry"] is None for f in zlist)
 
 
 def test_get_unknown_scan_is_404(client):

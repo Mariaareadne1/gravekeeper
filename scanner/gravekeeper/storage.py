@@ -18,10 +18,97 @@ import json
 import os
 import threading
 from abc import ABC, abstractmethod
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .config import get_settings
-from .models import ScanResult
+from .models import (
+    LifecycleState,
+    RegistryEntry,
+    RegistryHistoryEntry,
+    RegistryUpdate,
+    ScanResult,
+)
+from .registry import parse_identity_key
+
+# Keep only the most recent N history snapshots per entry so a hot key can't
+# grow the persisted JSON without bound.
+_MAX_HISTORY = 50
+
+
+def _apply_registry_update(
+    existing: RegistryEntry | None, identity_key: str, update: RegistryUpdate
+) -> RegistryEntry:
+    """Produce the next RegistryEntry from an optional existing one and an update.
+
+    Pure and backend-agnostic so both storage backends share the same shape. On
+    an update, the pre-update snapshot is appended to `history`; on a first write
+    a fresh entry is derived from the identity_key.
+    """
+    now = datetime.now(UTC)
+
+    if existing is not None:
+        history = list(existing.history)
+        history.append(
+            RegistryHistoryEntry(
+                changed_at=existing.updated_at,
+                changed_by=existing.updated_by,
+                lifecycle_state=existing.lifecycle_state,
+                assigned_owner=existing.assigned_owner,
+                owner_status_override=existing.owner_status_override,
+                note=existing.note,
+            )
+        )
+        source = existing.source
+        identity_id = existing.identity_id
+        assigned_owner = existing.assigned_owner
+        owner_status_override = existing.owner_status_override
+        lifecycle_state = existing.lifecycle_state
+        note = existing.note
+        updated_by = existing.updated_by
+    else:
+        history = []
+        source, identity_id = parse_identity_key(identity_key)
+        assigned_owner = None
+        owner_status_override = None
+        lifecycle_state = LifecycleState.active
+        note = None
+        updated_by = None
+
+    if update.clear_assigned_owner:
+        assigned_owner = None
+    elif update.assigned_owner is not None:
+        assigned_owner = update.assigned_owner
+
+    if update.clear_note:
+        note = None
+    elif update.note is not None:
+        note = update.note
+
+    if update.clear_owner_status_override:
+        owner_status_override = None
+    elif update.owner_status_override is not None:
+        owner_status_override = update.owner_status_override
+    if update.lifecycle_state is not None:
+        lifecycle_state = update.lifecycle_state
+    if update.updated_by is not None:
+        updated_by = update.updated_by
+
+    # Cap history so a hot key can't grow the JSON file without bound.
+    history = history[-_MAX_HISTORY:]
+
+    return RegistryEntry(
+        identity_key=identity_key,
+        source=source,
+        identity_id=identity_id,
+        assigned_owner=assigned_owner,
+        owner_status_override=owner_status_override,
+        lifecycle_state=lifecycle_state,
+        note=note,
+        updated_by=updated_by,
+        updated_at=now,
+        history=history,
+    )
 
 
 class Storage(ABC):
@@ -33,6 +120,15 @@ class Storage(ABC):
 
     @abstractmethod
     def list_scans(self) -> list[str]: ...
+
+    @abstractmethod
+    def get_registry_entry(self, identity_key: str) -> RegistryEntry | None: ...
+
+    @abstractmethod
+    def list_registry_entries(self) -> list[RegistryEntry]: ...
+
+    @abstractmethod
+    def upsert_registry_entry(self, identity_key: str, update: RegistryUpdate) -> RegistryEntry: ...
 
     def set_review_state(self, scan_id: str, agent_id: str, state: str | None) -> ScanResult | None:
         """Update a finding's human review state (Layer 2). Non-destructive."""
@@ -56,6 +152,8 @@ class LocalStorage(Storage):
     def __init__(self, path: str | Path | None = None):
         default = Path(__file__).resolve().parents[1] / "local_scans.json"
         self.path = Path(path) if path else default
+        # Registry lives in a sibling file next to the scans store.
+        self._registry_path = self.path.with_name("local_registry.json")
         self._lock = threading.Lock()
 
     def _read_all(self) -> dict[str, dict]:
@@ -69,7 +167,24 @@ class LocalStorage(Storage):
     def _write_all(self, data: dict[str, dict]) -> None:
         tmp = self.path.with_suffix(".tmp")
         tmp.write_text(json.dumps(data, default=str, indent=2))
+        # Owner-only perms so the scans file isn't group/world-readable.
+        tmp.chmod(0o600)
         os.replace(tmp, self.path)
+
+    def _read_registry(self) -> dict[str, dict]:
+        if not self._registry_path.exists():
+            return {}
+        try:
+            return json.loads(self._registry_path.read_text())
+        except json.JSONDecodeError:  # pragma: no cover - corrupt file
+            return {}
+
+    def _write_registry(self, data: dict[str, dict]) -> None:
+        tmp = self._registry_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, default=str, indent=2))
+        # Owner-only perms so the registry file isn't group/world-readable.
+        tmp.chmod(0o600)
+        os.replace(tmp, self._registry_path)
 
     def save_scan(self, result: ScanResult) -> None:
         with self._lock:
@@ -84,6 +199,23 @@ class LocalStorage(Storage):
 
     def list_scans(self) -> list[str]:
         return list(self._read_all().keys())
+
+    def get_registry_entry(self, identity_key: str) -> RegistryEntry | None:
+        raw = self._read_registry().get(identity_key)
+        return RegistryEntry.model_validate(raw) if raw else None
+
+    def list_registry_entries(self) -> list[RegistryEntry]:
+        return [RegistryEntry.model_validate(raw) for raw in self._read_registry().values()]
+
+    def upsert_registry_entry(self, identity_key: str, update: RegistryUpdate) -> RegistryEntry:
+        with self._lock:
+            data = self._read_registry()
+            existing_raw = data.get(identity_key)
+            existing = RegistryEntry.model_validate(existing_raw) if existing_raw else None
+            entry = _apply_registry_update(existing, identity_key, update)
+            data[identity_key] = json.loads(entry.model_dump_json())
+            self._write_registry(data)
+        return entry
 
 
 class SupabaseStorage(Storage):
@@ -159,6 +291,46 @@ class SupabaseStorage(Storage):
         resp = self._client.table("scans").select("scan_id").execute()
         return [row["scan_id"] for row in (resp.data or [])]
 
+    def get_registry_entry(self, identity_key: str) -> RegistryEntry | None:
+        resp = (
+            self._client.table("registry_entries")
+            .select("*")
+            .eq("identity_key", identity_key)
+            .execute()
+        )
+        rows = resp.data or []
+        if not rows:
+            return None
+        return RegistryEntry.model_validate(rows[0])
+
+    def list_registry_entries(self) -> list[RegistryEntry]:
+        resp = self._client.table("registry_entries").select("*").execute()
+        return [RegistryEntry.model_validate(row) for row in (resp.data or [])]
+
+    def upsert_registry_entry(self, identity_key: str, update: RegistryUpdate) -> RegistryEntry:
+        # Known limitation: this read-modify-write has no optimistic-concurrency
+        # guard, so concurrent updates to the same key can lose a write. Consistent
+        # with the rest of the untested Supabase backend; not addressed here.
+        existing = self.get_registry_entry(identity_key)
+        entry = _apply_registry_update(existing, identity_key, update)
+        self._client.table("registry_entries").upsert(
+            {
+                "identity_key": entry.identity_key,
+                "source": entry.source.value,
+                "identity_id": entry.identity_id,
+                "assigned_owner": entry.assigned_owner,
+                "owner_status_override": (
+                    entry.owner_status_override.value if entry.owner_status_override else None
+                ),
+                "lifecycle_state": entry.lifecycle_state.value,
+                "note": entry.note,
+                "updated_by": entry.updated_by,
+                "updated_at": entry.updated_at.isoformat(),
+                "history": [json.loads(h.model_dump_json()) for h in entry.history],
+            }
+        ).execute()
+        return entry
+
 
 _storage: Storage | None = None
 
@@ -170,7 +342,7 @@ def get_storage() -> Storage:
         return _storage
 
     settings = get_settings()
-    backend = os.getenv("STORAGE_BACKEND", "auto").lower()
+    backend = settings.storage_backend.lower()
 
     if backend == "supabase" and settings.supabase_configured:
         _storage = SupabaseStorage(settings.supabase_url, settings.supabase_service_key)
