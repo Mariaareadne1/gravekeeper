@@ -9,23 +9,44 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Warm, editorial palette — deliberately not the dark-cyber look competitors use.
-        bone: "#F7F4EC", // off-white background
-        ink: "#1F1B16", // warm near-black text
-        zombie: {
-          DEFAULT: "#7BA05B", // sickly-but-cute desaturated green
-          dark: "#5C7B41",
-          light: "#A8C48A",
-          wash: "#EAF0E1",
+        // Dark, moody palette — near-black canvas, off-white text, one purple accent.
+        // Token names are kept from the old light theme so class names carry over;
+        // only the values changed (bone = dark canvas, ink = light text, etc.).
+        bone: "#0E0D10", // near-black page canvas (faint cool cast)
+        surface: {
+          DEFAULT: "#17151C", // raised panel / card
+          light: "#211D2A", // hover / second elevation
         },
-        rot: "#B4553B", // warm alert/danger for "left" owners and stale activity
-        dusk: "#6B6558", // muted secondary text
+        edge: "#2A2633", // hairline borders on dark
+        ink: "#ECEAE4", // primary near-white text
+        dusk: "#9E97AC", // muted secondary text (lavender-gray)
+        zombie: {
+          DEFAULT: "#8B5CF6", // the zombie: a cute, glowing violet
+          dark: "#7C3AED", // deeper violet for buttons / active (white text ~4.6:1)
+          light: "#B79CF2", // highlights, borders
+          deep: "#6D28D9", // outlines / mascot linework
+          wash: "#211A33", // dark violet fill for chips / badges
+        },
+        rot: {
+          DEFAULT: "#E5645A", // warm alert red, legible on dark
+          dark: "#C4453B",
+        },
       },
       fontFamily: {
         display: ["var(--font-display)", "Georgia", "serif"],
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
       },
+      boxShadow: {
+        // Soft violet glow for the moody hero / mascot.
+        glow: "0 0 40px -8px rgba(139, 92, 246, 0.45)",
+        "glow-sm": "0 0 20px -6px rgba(139, 92, 246, 0.4)",
+      },
       keyframes: {
+        // Idle undead sway — a slow lean side to side, like shuffling in place.
+        shuffle: {
+          "0%, 100%": { transform: "translateY(0) rotate(-2.5deg)" },
+          "50%": { transform: "translateY(-6px) rotate(2.5deg)" },
+        },
         drift: {
           "0%, 100%": { transform: "translateY(0) rotate(-2deg)" },
           "50%": { transform: "translateY(-10px) rotate(2deg)" },
@@ -43,11 +64,17 @@ const config: Config = {
           "92%": { transform: "scale(1)", opacity: "0.6" },
           "96%": { transform: "scale(2.2)", opacity: "0" },
         },
+        "glow-pulse": {
+          "0%, 100%": { opacity: "0.5" },
+          "50%": { opacity: "0.9" },
+        },
       },
       animation: {
+        shuffle: "shuffle 4.5s ease-in-out infinite",
         drift: "drift 6s ease-in-out infinite",
         "cursor-loop": "cursor-loop 7s ease-in-out infinite",
         "click-pulse": "click-pulse 7s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 5s ease-in-out infinite",
       },
     },
   },

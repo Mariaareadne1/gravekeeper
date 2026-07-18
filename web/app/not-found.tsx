@@ -5,7 +5,7 @@ export default function NotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-6 py-12 text-center">
       <ZombieMascot size={110} />
-      <p className="font-display text-5xl font-bold text-zombie-dark">404</p>
+      <p className="font-display text-5xl font-bold text-zombie-light">404</p>
       <h1 className="font-display text-3xl font-bold sm:text-4xl">
         This grave is empty.
       </h1>

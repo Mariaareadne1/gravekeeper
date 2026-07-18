@@ -67,7 +67,7 @@ export default function RegistryPage() {
 
 function TopBar() {
   return (
-    <header className="border-b border-zombie-light/40 bg-bone/85">
+    <header className="border-b border-zombie-light/40 bg-surface/85">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold">
           <ZombieMascot size={30} animate={false} />
@@ -104,7 +104,7 @@ function RegistryTable({
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto rounded-2xl border border-zombie-light/50 bg-white/70">
+      <div className="mt-6 overflow-x-auto rounded-2xl border border-zombie-light/50 bg-surface">
         <table className="w-full min-w-[820px] text-left text-sm">
           <thead className="border-b border-zombie-light/50 text-xs uppercase tracking-wide text-dusk">
             <tr>
@@ -151,7 +151,7 @@ function RegistryTable({
                     </td>
                   </tr>
                   {open && (
-                    <tr className="bg-bone/60">
+                    <tr className="bg-surface-light">
                       <td colSpan={6} className="px-4 py-5">
                         <div id={panelId} className="max-w-lg">
                           <RegistryEditor
@@ -183,7 +183,7 @@ function SourceBadge({ source }: { source: Source }) {
 }
 
 function LifecycleChip({ state }: { state: RegistryEntry["lifecycle_state"] }) {
-  const tone = state === "active" ? "bg-zombie-wash text-zombie-dark" : "bg-dusk/10 text-dusk";
+  const tone = state === "active" ? "bg-zombie-wash text-zombie-light" : "bg-surface-light text-dusk";
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tone}`}>
       {LIFECYCLE_LABELS[state]}
@@ -210,7 +210,7 @@ function EmptyState() {
         identity to start the registry.
       </p>
       <p className="mt-4 text-sm text-dusk">
-        <Link href="/scan" className="font-semibold text-zombie-dark underline">
+        <Link href="/scan" className="font-semibold text-zombie-light underline">
           Run a scan
         </Link>{" "}
         to get started.

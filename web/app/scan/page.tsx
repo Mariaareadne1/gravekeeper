@@ -142,7 +142,7 @@ export default function ScanPage() {
 
         <form
           onSubmit={submit}
-          className="mt-4 rounded-2xl border border-zombie-light/50 bg-white/70 p-6"
+          className="mt-4 rounded-2xl border border-zombie-light/50 bg-surface p-6"
         >
           {source === "aws" && (
             <>
@@ -164,7 +164,7 @@ export default function ScanPage() {
                 Use temporary, read-only credentials. Attach our{" "}
                 <a
                   href="/gravekeeper-readonly-policy.json"
-                  className="font-semibold text-zombie-dark underline"
+                  className="font-semibold text-zombie-light underline"
                   download
                 >
                   least-privilege IAM policy
@@ -260,7 +260,7 @@ export default function ScanPage() {
 
         <p className="mt-6 text-center text-sm text-dusk">
           Not ready to connect?{" "}
-          <Link href="/demo" className="font-semibold text-zombie-dark underline">
+          <Link href="/demo" className="font-semibold text-zombie-light underline">
             See the live demo
           </Link>{" "}
           on a sample environment first.
@@ -274,7 +274,7 @@ export default function ScanPage() {
 
 function TopBar() {
   return (
-    <header className="border-b border-zombie-light/40 bg-bone/85">
+    <header className="border-b border-zombie-light/40 bg-surface/85">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold">
           <ZombieMascot size={30} animate={false} />

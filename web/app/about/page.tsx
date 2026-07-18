@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <main className="min-h-screen">
-      <header className="border-b border-zombie-light/40 bg-bone/85">
+      <header className="border-b border-zombie-light/40 bg-surface/85">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold">
             <ZombieMascot size={30} animate={false} />
@@ -115,7 +115,7 @@ export default function AboutPage() {
             </Link>
             <Link
               href="/scan"
-              className="rounded-full border border-zombie-dark px-5 py-2 text-sm font-semibold text-zombie-dark hover:bg-zombie-wash"
+              className="rounded-full border border-zombie-light px-5 py-2 text-sm font-semibold text-zombie-light hover:bg-zombie-wash"
             >
               Scan my accounts
             </Link>

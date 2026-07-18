@@ -146,7 +146,7 @@ export default function RegistryEditor({
           {saveState === "saving" ? "Saving…" : "Save to registry"}
         </button>
         {saveState === "saved" && (
-          <span role="status" className="text-xs font-medium text-zombie-dark">
+          <span role="status" className="text-xs font-medium text-zombie-light">
             Saved.
           </span>
         )}

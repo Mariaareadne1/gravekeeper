@@ -21,7 +21,7 @@ export default function LandingPage() {
 
 function SiteHeader() {
   return (
-    <header className="sticky top-0 z-20 border-b border-zombie-light/40 bg-bone/85 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-zombie-light/40 bg-surface/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2 font-display text-xl font-bold">
           <ZombieMascot size={34} animate={false} />
@@ -48,7 +48,7 @@ function Hero() {
     <section className="paper-grain relative overflow-hidden">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 sm:py-24 lg:grid-cols-2">
         <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-zombie-light bg-zombie-wash px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zombie-dark">
+          <span className="inline-flex items-center gap-2 rounded-full border border-zombie-light bg-zombie-wash px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zombie-light">
             Read-only · self-serve · cross-platform
           </span>
           <h1 className="mt-5 font-display text-4xl font-bold leading-[1.05] sm:text-5xl lg:text-6xl">
@@ -68,7 +68,7 @@ function Hero() {
             </Link>
             <Link
               href="/demo"
-              className="rounded-full border border-zombie-dark px-6 py-3 text-center font-semibold text-zombie-dark transition hover:bg-zombie-wash"
+              className="rounded-full border border-zombie-light px-6 py-3 text-center font-semibold text-zombie-light transition hover:bg-zombie-wash"
             >
               See a live demo
             </Link>
@@ -79,7 +79,9 @@ function Hero() {
         </div>
 
         <div className="relative flex flex-col items-center gap-6">
-          <ZombieMascot size={200} />
+          <div className="rounded-full shadow-glow">
+            <ZombieMascot variant="grave" size={200} />
+          </div>
           <MindlessCursor className="max-w-sm" />
         </div>
       </div>
@@ -89,7 +91,7 @@ function Hero() {
 
 function WhatIsAZombie() {
   return (
-    <section id="what" className="border-y border-zombie-light/40 bg-white/50">
+    <section id="what" className="border-y border-zombie-light/40 bg-surface">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 lg:grid-cols-[1fr_1.4fr]">
         <div className="flex justify-center">
           <ZombieMascot size={170} />
@@ -201,7 +203,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="how" className="border-y border-zombie-light/40 bg-white/50">
+    <section id="how" className="border-y border-zombie-light/40 bg-surface">
       <div className="mx-auto max-w-6xl px-6 py-16">
         <h2 className="font-display text-3xl font-bold sm:text-4xl">How it works</h2>
         <p className="mt-3 max-w-2xl text-lg text-dusk">
@@ -212,10 +214,10 @@ function HowItWorks() {
           {steps.map((s) => (
             <div
               key={s.n}
-              className="rounded-2xl border border-zombie-light/50 bg-bone p-6 shadow-sm"
+              className="rounded-2xl border border-zombie-light/50 bg-surface-light p-6 shadow-sm"
             >
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-zombie-wash text-zombie-dark">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-zombie-wash text-zombie-light">
                   <svg
                     width="22"
                     height="22"
@@ -229,7 +231,7 @@ function HowItWorks() {
                     {s.icon}
                   </svg>
                 </span>
-                <span className="font-display text-2xl font-bold text-zombie-dark">{s.n}</span>
+                <span className="font-display text-2xl font-bold text-zombie-light">{s.n}</span>
               </div>
               <h3 className="mt-4 text-xl font-semibold">{s.title}</h3>
               <p className="mt-2 leading-relaxed text-dusk">{s.body}</p>
@@ -268,7 +270,7 @@ function DemoTeaser() {
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-zombie-light/60 bg-white/80 p-5 shadow-md">
+        <div className="rounded-2xl border border-zombie-light/60 bg-surface p-5 shadow-md">
           <div className="flex items-center justify-between border-b border-zombie-light/50 pb-3">
             <span className="font-semibold">Example scan</span>
             <span className="rounded-full bg-rot/10 px-3 py-1 text-sm font-semibold text-rot">
@@ -288,7 +290,7 @@ function DemoTeaser() {
               {rows.map((r) => (
                 <tr key={r.name} className="border-t border-zombie-light/30">
                   <td className="py-2.5 font-medium">
-                    <span className="mr-2 rounded bg-zombie-wash px-1.5 py-0.5 text-xs uppercase text-zombie-dark">
+                    <span className="mr-2 rounded bg-zombie-wash px-1.5 py-0.5 text-xs uppercase text-zombie-light">
                       {r.src}
                     </span>
                     {r.name}
@@ -299,7 +301,7 @@ function DemoTeaser() {
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                         r.owner === "owner left" || r.owner === "no owner"
                           ? "bg-rot/10 text-rot"
-                          : "bg-zombie-wash text-zombie-dark"
+                          : "bg-zombie-wash text-zombie-light"
                       }`}
                     >
                       {r.owner}
@@ -345,7 +347,7 @@ function TrustSection() {
         </p>
         <div className="mt-10 grid gap-5 sm:grid-cols-2">
           {points.map(([title, body]) => (
-            <div key={title} className="flex gap-4 rounded-2xl border border-zombie-light/50 bg-bone p-5">
+            <div key={title} className="flex gap-4 rounded-2xl border border-zombie-light/50 bg-surface p-5">
               <svg
                 width="24"
                 height="24"
@@ -369,7 +371,7 @@ function TrustSection() {
         </div>
         <p className="mt-6 text-sm text-dusk">
           Want the detail? Read the{" "}
-          <Link href="/docs/threat-model" className="font-semibold text-zombie-dark underline">
+          <Link href="/docs/threat-model" className="font-semibold text-zombie-light underline">
             threat model
           </Link>{" "}
           — exactly what we request, what we store, and how &ldquo;dead&rdquo; is scored.
@@ -405,12 +407,12 @@ function Faq() {
   return (
     <section id="faq" className="mx-auto max-w-3xl px-6 py-16">
       <h2 className="font-display text-3xl font-bold sm:text-4xl">Questions</h2>
-      <div className="mt-8 divide-y divide-zombie-light/40 rounded-2xl border border-zombie-light/50 bg-white/60">
+      <div className="mt-8 divide-y divide-zombie-light/40 rounded-2xl border border-zombie-light/50 bg-surface">
         {items.map(([q, a]) => (
           <details key={q} className="group px-5 py-4">
             <summary className="flex cursor-pointer list-none items-center justify-between font-semibold">
               {q}
-              <span className="ml-4 text-zombie-dark transition group-open:rotate-45">+</span>
+              <span className="ml-4 text-zombie-light transition group-open:rotate-45">+</span>
             </summary>
             <p className="mt-3 leading-relaxed text-dusk">{a}</p>
           </details>
@@ -422,7 +424,7 @@ function Faq() {
 
 function SiteFooter() {
   return (
-    <footer className="border-t border-zombie-light/40 bg-white/50">
+    <footer className="border-t border-zombie-light/40 bg-surface">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-10 sm:flex-row">
         <div className="flex items-center gap-2 font-display text-lg font-bold">
           <ZombieMascot size={30} animate={false} />

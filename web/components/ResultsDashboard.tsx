@@ -134,7 +134,7 @@ export default function ResultsDashboard({ initial }: { initial: ScanResult }) {
       {visible.length === 0 ? (
         <EmptyState filter={filter} />
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-2xl border border-zombie-light/50 bg-white/70">
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-zombie-light/50 bg-surface">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="border-b border-zombie-light/50 text-xs uppercase tracking-wide text-dusk">
               <tr>
@@ -228,7 +228,7 @@ function SummaryBar({
   total: number;
 }) {
   return (
-    <div className="rounded-2xl border border-zombie-light/50 bg-white/70 p-6">
+    <div className="rounded-2xl border border-zombie-light/50 bg-surface p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="text-sm text-dusk">{label}</div>
         <div className="flex gap-2">
@@ -265,7 +265,7 @@ function SummaryBar({
 }
 
 function Stat({ n, label, tone }: { n: number; label: string; tone?: "rot" | "zombie" }) {
-  const color = tone === "rot" ? "text-rot" : tone === "zombie" ? "text-zombie-dark" : "text-ink";
+  const color = tone === "rot" ? "text-rot" : tone === "zombie" ? "text-zombie-light" : "text-ink";
   return (
     <div>
       <span className={`font-display text-2xl font-bold ${color}`}>{n}</span>{" "}
@@ -328,7 +328,7 @@ function Chip({ tone, children }: { tone: "rot" | "gray" | "zombie"; children: R
       ? "bg-rot/10 text-rot"
       : tone === "zombie"
         ? "bg-zombie-wash text-ink"
-        : "bg-dusk/10 text-dusk";
+        : "bg-surface-light text-dusk";
   return (
     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles}`}>{children}</span>
   );
@@ -352,7 +352,7 @@ function ConfidenceBar({ value }: { value: number }) {
 
 function ReviewTag({ state }: { state: string }) {
   return (
-    <span className="rounded-full bg-zombie-dark/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-zombie-dark">
+    <span className="rounded-full bg-zombie-wash px-2 py-0.5 text-[10px] font-semibold uppercase text-zombie-light">
       {state}
     </span>
   );
@@ -360,7 +360,7 @@ function ReviewTag({ state }: { state: string }) {
 
 function EmptyState({ filter }: { filter: Filter }) {
   return (
-    <div className="mt-4 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-zombie-light bg-white/50 py-16 text-center">
+    <div className="mt-4 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-zombie-light bg-surface py-16 text-center">
       <ZombieMascot size={90} />
       <p className="text-dusk">
         {filter === "zombies"
@@ -450,7 +450,7 @@ function DetailDrawer({
   return (
     <div className="fixed inset-0 z-40 flex justify-end">
       <div
-        className="absolute inset-0 bg-ink/30"
+        className="absolute inset-0 bg-black/60"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -461,7 +461,7 @@ function DetailDrawer({
         aria-label={`Details for ${record.display_name}`}
         tabIndex={-1}
         onKeyDown={handleKeyDown}
-        className="relative z-10 h-full w-full max-w-md overflow-y-auto bg-bone p-6 shadow-2xl"
+        className="relative z-10 h-full w-full max-w-md overflow-y-auto bg-surface p-6 shadow-2xl"
       >
         <div className="flex items-start justify-between">
           <div>
@@ -480,7 +480,7 @@ function DetailDrawer({
           </button>
         </div>
 
-        <div className="mt-5 rounded-xl border border-zombie-light/50 bg-white/70 p-4">
+        <div className="mt-5 rounded-xl border border-zombie-light/50 bg-surface-light p-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">Zombie confidence</span>
             <span className="font-display text-lg font-bold text-rot">
@@ -528,7 +528,7 @@ function DetailDrawer({
           </button>
           <button
             onClick={() => onMark(finding.agent_id, "keep")}
-            className="flex-1 rounded-full border border-zombie-dark px-4 py-2 text-sm font-semibold text-zombie-dark hover:bg-zombie-wash"
+            className="flex-1 rounded-full border border-zombie-light px-4 py-2 text-sm font-semibold text-zombie-light hover:bg-zombie-wash"
           >
             Mark as keep
           </button>

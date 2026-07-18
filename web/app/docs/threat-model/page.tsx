@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function ThreatModelPage() {
   return (
     <main className="min-h-screen">
-      <header className="border-b border-zombie-light/40 bg-bone/85">
+      <header className="border-b border-zombie-light/40 bg-surface/85">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 font-display text-lg font-bold">
             <ZombieMascot size={30} animate={false} />
@@ -45,7 +45,7 @@ export default function ThreatModelPage() {
               ["iam:GetRole", "role last-used and permissions"],
             ].map(([call, why]) => (
               <li key={call} className="flex flex-wrap gap-x-2 text-sm">
-                <code className="rounded bg-zombie-wash px-1.5 py-0.5 text-zombie-dark">{call}</code>
+                <code className="rounded bg-zombie-wash px-1.5 py-0.5 text-zombie-light">{call}</code>
                 <span className="text-dusk">— {why}</span>
               </li>
             ))}
@@ -57,7 +57,7 @@ export default function ThreatModelPage() {
             <a
               href="/gravekeeper-readonly-policy.json"
               download
-              className="font-semibold text-zombie-dark underline"
+              className="font-semibold text-zombie-light underline"
             >
               least-privilege IAM policy
             </a>
@@ -114,11 +114,11 @@ export default function ThreatModelPage() {
             <ZombieMascot size={48} animate={false} />
             <p className="text-sm text-dusk">
               Ready to look? The{" "}
-              <Link href="/demo" className="font-semibold text-zombie-dark underline">
+              <Link href="/demo" className="font-semibold text-zombie-light underline">
                 live demo
               </Link>{" "}
               runs on a sample environment with zero risk, or{" "}
-              <Link href="/scan" className="font-semibold text-zombie-dark underline">
+              <Link href="/scan" className="font-semibold text-zombie-light underline">
                 scan your own accounts
               </Link>{" "}
               read-only.
