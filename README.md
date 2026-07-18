@@ -58,10 +58,10 @@ cd scanner && pytest -q
 
 ## Status
 
-Early, and actively being built. The scanner core, scoring engine, synthetic test environment, and the AWS and GitHub connectors work today; more connectors and the lifecycle registry are next.
+Early, and actively being built. The scanner core, scoring engine, synthetic test environment, all four connectors (AWS, GitHub, GCP, and Azure/Entra), and the lifecycle/ownership registry work today. The connectors are proven against mocks and the synthetic environment, not yet against live accounts. More connectors are next.
 
 ## Tech stack
 
-- **Backend:** Python 3.11+, FastAPI, Pydantic v2, boto3 (AWS), PyGithub (GitHub), pytest + moto for tests
-- **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Backend:** Python 3.11+, FastAPI, Pydantic v2, boto3 (AWS), httpx (GitHub), Google API client + google-auth (GCP), MSAL + Microsoft Graph (Azure/Entra), pytest + moto for tests
+- **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS, with Vitest + React Testing Library for unit/component tests and Playwright for e2e
 - **Database:** Supabase (Postgres), with a local offline fallback so the scanner runs without it
