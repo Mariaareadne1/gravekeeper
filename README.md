@@ -79,6 +79,22 @@ cd scanner && source .venv/bin/activate && uvicorn gravekeeper.main:app --port 8
 cd web && npm run e2e
 ```
 
+## Authentication
+
+The API ships with an **opt-in API-key gate**. With no key configured (the default),
+every endpoint is open — local dev and the zero-setup demo stay frictionless. Set
+`API_KEY` (see `.env.example`) before exposing the scanner beyond localhost, and the
+credential-accepting and write endpoints then require that value in an `X-API-Key`
+header:
+
+- **Gated:** real-account scans (`POST /scan` with a non-synthetic connector),
+  review writes (`POST /scan/{id}/review`), and registry writes (`PUT /registry`).
+- **Still public:** the synthetic demo scan and all reads, so `/demo` keeps working.
+
+The key is compared in constant time. Keep it secret — it is a server-side value, not
+an `NEXT_PUBLIC_` one, so a browser deployment should sit behind a proxy (or a Next.js
+route handler) that injects the header rather than shipping the key in the bundle.
+
 ## Status
 
 Early, and actively being built. The scanner core, scoring engine, synthetic test environment, all four connectors (AWS, GitHub, GCP, and Azure/Entra), and the lifecycle/ownership registry work today. The connectors are proven against mocks and the synthetic environment, not yet against live accounts. More connectors are next.

@@ -15,12 +15,13 @@ from __future__ import annotations
 
 import csv
 import io
-from typing import Literal
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+from ..config import Settings, get_settings
 from ..connectors.aws import AWSConnector
 from ..connectors.azure import AzureConnector
 from ..connectors.base import Connector, ConnectorError
@@ -31,6 +32,7 @@ from ..models import Finding, RegistryEntry, ScanResult
 from ..pipeline import run_scan
 from ..registry import identity_key_for
 from ..storage import get_storage
+from .auth import api_key_guard, enforce_api_key
 
 router = APIRouter()
 
@@ -82,7 +84,17 @@ def health() -> dict:
 
 
 @router.post("/scan", response_model=ScanSummary)
-def create_scan(req: ScanRequest) -> ScanSummary:
+def create_scan(
+    req: ScanRequest,
+    settings: Annotated[Settings, Depends(get_settings)],
+    x_api_key: Annotated[str | None, Header(alias="X-API-Key")] = None,
+) -> ScanSummary:
+    # The synthetic demo scan stays public so the no-login /demo keeps working;
+    # any real-connector scan (which accepts live credentials) requires the key.
+    name = "synthetic" if req.synthetic else req.connector
+    if name != "synthetic":
+        enforce_api_key(x_api_key, settings)
+
     connector = _build_connector(req)
     try:
         connector.validate_credentials()
@@ -136,7 +148,9 @@ def get_findings(scan_id: str, zombies_only: bool = False) -> list[FindingView]:
     return views
 
 
-@router.post("/scan/{scan_id}/review", response_model=Finding)
+@router.post(
+    "/scan/{scan_id}/review", response_model=Finding, dependencies=[Depends(api_key_guard)]
+)
 def set_review(scan_id: str, agent_id: str, req: ReviewRequest) -> Finding:
     if req.review_state not in (None, "review", "keep"):
         raise HTTPException(

@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     # flows through one place rather than a stray os.getenv.
     storage_backend: str = "auto"
 
+    # API key gate. Empty (the default) means auth is DISABLED — every endpoint is
+    # open, which keeps local dev and the zero-setup demo frictionless. Set this
+    # (env: API_KEY) before exposing the API beyond localhost: real-credential scans
+    # and every write then require the key in the `X-API-Key` header. The synthetic
+    # demo scan and all reads stay open so the public /demo keeps working.
+    api_key: str = ""
+
     # API server
     api_host: str = "0.0.0.0"
     api_port: int = 8000
@@ -42,6 +49,11 @@ class Settings(BaseSettings):
     @property
     def supabase_configured(self) -> bool:
         return bool(self.supabase_url and self.supabase_service_key)
+
+    @property
+    def auth_enabled(self) -> bool:
+        """True once an API key is configured; otherwise the API is open."""
+        return bool(self.api_key)
 
 
 _settings: Settings | None = None

@@ -11,10 +11,11 @@ query param, never a path segment.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..models import LifecycleState, RegistryEntry, RegistryUpdate, Source
 from ..storage import get_storage
+from .auth import api_key_guard
 
 router = APIRouter()
 
@@ -40,7 +41,7 @@ def lookup_registry(identity_key: str) -> RegistryEntry:
     return entry
 
 
-@router.put("/registry", response_model=RegistryEntry)
+@router.put("/registry", response_model=RegistryEntry, dependencies=[Depends(api_key_guard)])
 def upsert_registry(identity_key: str, update: RegistryUpdate) -> RegistryEntry:
     try:
         return get_storage().upsert_registry_entry(identity_key, update)

@@ -53,6 +53,12 @@ non-human identities and flags the ones that look abandoned.
   failures now surface visibly instead of being silently swallowed, and there are
   route-level error and not-found boundaries.
 - **Read-only connect flow** with a least-privilege IAM policy download.
+- **API-key gate (opt-in):** an `API_KEY` setting that, when set, requires an
+  `X-API-Key` header (constant-time compared) on the credential-accepting and write
+  endpoints — real-account scans, review writes, and registry writes. The synthetic
+  demo scan and all reads stay public, and with no key configured the API is fully
+  open, so local dev and the demo are unchanged. Closes the "anyone reachable can run
+  scans / tamper with the registry" gap before any non-localhost exposure.
 - **Dark, moody UI theme:** the whole app moved from the warm light palette to a
   near-black canvas with a single violet accent and a faint purple aura. The ghost-blob
   mascot was replaced by a cute violet zombie (arms raised, one open eye and one
