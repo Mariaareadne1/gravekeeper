@@ -21,6 +21,8 @@ GraveKeeper connects to the accounts you point it at, reads their access records
 
 Each candidate comes with a confidence score and the plain-language reasons behind it, so a human can make the call.
 
+Because "who owns this?" is the question the scan can't always answer on its own, GraveKeeper also keeps a **lifecycle registry**: a durable, human-maintained layer where you assign an owner, set a lifecycle state (active, under review, decommission requested, retired), and leave a note on any identity. Those annotations are keyed to the identity and persist across scans, so a decision you make today reappears next to the same agent the next time it turns up — without ever touching the real credential.
+
 ## What it does *not* do
 
 - It does not "scan the internet" or track anything outside your accounts. It only reads environments you explicitly connect and grant access to.
@@ -48,12 +50,33 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:3000. To see it working with zero setup, click **See a live demo** — the `/demo` page runs a full scan against a built-in sample environment, no login and no credentials required.
+Then open http://localhost:3000. To see it working with zero setup, click **See a live demo** — the `/demo` page runs a full scan against a built-in sample environment, no login and no credentials required. (The demo and scan pages call the backend, so keep the scanner running on port 8000 while you use them.)
 
-To run the tests and see the scoring proven against a synthetic environment with known answers:
+## Testing
+
+The project ships with a full test suite — 106 tests in all, none of which need real cloud credentials.
+
+**Backend** (87 tests, mocks + a synthetic environment with a known answer key):
 
 ```bash
-cd scanner && pytest -q
+cd scanner && source .venv/bin/activate && pytest -q
+```
+
+This includes a pipeline test that proves 100% precision and recall on the planted zombies in the synthetic environment.
+
+**Frontend** (14 Vitest + React Testing Library unit/component tests):
+
+```bash
+cd web && npm run test:run
+```
+
+**End-to-end** (5 Playwright specs covering the demo, scan, and registry flows). These drive a real browser, so the backend must be running on port 8000 first:
+
+```bash
+# terminal 1
+cd scanner && source .venv/bin/activate && uvicorn gravekeeper.main:app --port 8000
+# terminal 2
+cd web && npm run e2e
 ```
 
 ## Status

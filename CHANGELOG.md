@@ -53,6 +53,12 @@ non-human identities and flags the ones that look abandoned.
   failures now surface visibly instead of being silently swallowed, and there are
   route-level error and not-found boundaries.
 - **Read-only connect flow** with a least-privilege IAM policy download.
+- **Dark, moody UI theme:** the whole app moved from the warm light palette to a
+  near-black canvas with a single violet accent and a faint purple aura. The ghost-blob
+  mascot was replaced by a cute violet zombie (arms raised, one open eye and one
+  stitched-shut X eye, mid-shuffle) — it claws its way out of a headstone and mound of
+  earth on the landing hero, and appears solo everywhere else. Contrast holds to WCAG AA
+  in the dark theme.
 - **Tests:** the backend grew to 87 passing (new GCP, Azure, and registry suites). The
   frontend went from zero tests to Vitest + React Testing Library unit/component tests
   (14) and Playwright e2e scaffolding (5 specs: demo synthetic scan, connector tabs,
