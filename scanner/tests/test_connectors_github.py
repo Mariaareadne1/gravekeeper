@@ -129,3 +129,46 @@ def test_missing_token_raises_without_injected_client():
     conn = GitHubConnector(credentials={})
     with pytest.raises(ConnectorError):
         conn.validate_credentials()
+
+
+def test_deploy_key_403_skips_repo_with_note_not_abort(client):
+    # A token without repo-admin gets 403 listing one repo's keys. The scan should
+    # skip that repo and add a coverage note, NOT abort the whole discover().
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == f"/repos/{ORG}/legacy-infra/keys":
+            return httpx.Response(403, json={"message": "Resource not accessible"})
+        body = _ROUTES.get(path)
+        return httpx.Response(
+            200 if body is not None else 404, json=body if body is not None else {}
+        )
+
+    c = httpx.Client(transport=httpx.MockTransport(handler), base_url="https://api.github.com")
+    conn = GitHubConnector(credentials={"org": ORG}, client=c)
+    records = conn.discover()
+
+    # The accessible repo's key still comes through.
+    keys = [r for r in records if r.type is IdentityType.api_key]
+    assert any(r.id == f"github:deploykey:{ORG}/web:1" for r in keys)
+    # The forbidden repo is skipped, and an honest coverage note is present.
+    notes = [r for r in records if "coverage-note" in r.id]
+    assert any("Administration: Read" in r.display_name for r in notes)
+
+
+def test_installations_403_noted_and_deploy_keys_still_scanned(client):
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == f"/orgs/{ORG}/installations":
+            return httpx.Response(403, json={"message": "forbidden"})
+        body = _ROUTES.get(path)
+        return httpx.Response(
+            200 if body is not None else 404, json=body if body is not None else {}
+        )
+
+    c = httpx.Client(transport=httpx.MockTransport(handler), base_url="https://api.github.com")
+    conn = GitHubConnector(credentials={"org": ORG}, client=c)
+    records = conn.discover()
+
+    # Installations are noted as skipped, but deploy keys still get scanned.
+    assert any("app installations" in r.display_name for r in records)
+    assert any(r.type is IdentityType.api_key for r in records)

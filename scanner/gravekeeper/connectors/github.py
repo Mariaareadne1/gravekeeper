@@ -14,6 +14,11 @@ PUT/DELETE. It only reads:
     GET /orgs/{org}/installations
 
 Credentials (per scan): {"token": "<read-only PAT>", "org": "<optional org>"}.
+
+Token permissions (fine-grained PAT): "Repository → Metadata: Read" is the baseline;
+listing deploy keys additionally needs "Repository → Administration: Read", and listing
+org app installations needs "Organization → Administration: Read". If a permission is
+missing, that resource is skipped with a coverage note rather than failing the scan.
 """
 
 from __future__ import annotations
@@ -26,6 +31,14 @@ from .base import Connector, ConnectorError
 
 _API = "https://api.github.com"
 _MAX_REPOS = 100  # cap deploy-key scanning breadth for a first pass; logged, not silent
+
+
+class _Forbidden(ConnectorError):
+    """A 403 on one read — the token is valid but lacks that specific permission.
+
+    Raised per-call so `discover()` can skip the resource it can't see and keep
+    going, rather than aborting the whole scan.
+    """
 
 
 class GitHubConnector(Connector):
@@ -54,9 +67,13 @@ class GitHubConnector(Connector):
     def _get(self, client: httpx.Client, path: str) -> httpx.Response:
         resp = client.get(path)
         if resp.status_code == 401:
-            raise ConnectorError("GitHub token rejected (401)")
+            raise ConnectorError("GitHub token rejected (401) — check the token is valid.")
         if resp.status_code == 403:
-            raise ConnectorError("GitHub token lacks required read scope (403)")
+            raise _Forbidden(
+                "GitHub returned 403 for a read. Listing deploy keys needs the "
+                "fine-grained 'Repository → Administration: Read' permission (and "
+                "'Organization → Administration: Read' to list app installations)."
+            )
         resp.raise_for_status()
         return resp
 
@@ -93,8 +110,13 @@ class GitHubConnector(Connector):
     def _discover_installations(self, client: httpx.Client, org: str | None) -> list[AgentRecord]:
         if not org:
             return []
+        try:
+            installs = self._paginate(client, f"/orgs/{org}/installations")
+        except _Forbidden:
+            # Token can't list org installations — note the gap, don't abort the scan.
+            return [_perm_note("org app installations", "Organization → Administration: Read")]
         out: list[AgentRecord] = []
-        for inst in self._paginate(client, f"/orgs/{org}/installations"):
+        for inst in installs:
             account = (inst.get("account") or {}).get("login")
             app_slug = inst.get("app_slug") or "unknown-app"
             perms = list((inst.get("permissions") or {}).keys())
@@ -116,12 +138,22 @@ class GitHubConnector(Connector):
 
     def _discover_deploy_keys(self, client: httpx.Client, org: str | None) -> list[AgentRecord]:
         repos_path = f"/orgs/{org}/repos" if org else "/user/repos"
-        repos = self._paginate(client, f"{repos_path}?per_page=100")
+        try:
+            repos = self._paginate(client, f"{repos_path}?per_page=100")
+        except _Forbidden:
+            return [_perm_note("repositories", "Repository → Metadata: Read")]
         out: list[AgentRecord] = []
+        forbidden_repos = 0
         for repo in repos[:_MAX_REPOS]:
             full = repo.get("full_name")
             owner_login = (repo.get("owner") or {}).get("login")
-            for key in self._paginate(client, f"/repos/{full}/keys"):
+            try:
+                keys = self._paginate(client, f"/repos/{full}/keys")
+            except _Forbidden:
+                # Listing deploy keys needs repo admin; skip this repo, tally it.
+                forbidden_repos += 1
+                continue
+            for key in keys:
                 read_only = key.get("read_only", True)
                 out.append(
                     AgentRecord(
@@ -137,6 +169,14 @@ class GitHubConnector(Connector):
                         raw_metadata={"repo": full, "verified": key.get("verified")},
                     )
                 )
+        if forbidden_repos:
+            # Honest coverage: say how many repos we couldn't read deploy keys for.
+            out.append(
+                _perm_note(
+                    f"deploy keys on {forbidden_repos} repo(s)",
+                    "Repository → Administration: Read",
+                )
+            )
         if len(repos) > _MAX_REPOS:
             # Never silently truncate — surface the cap so coverage is honest.
             out.append(_coverage_note(len(repos)))
@@ -155,6 +195,18 @@ def _next_link(link_header: str | None) -> str | None:
             # Return a path relative to the base_url.
             return url.replace(_API, "")
     return None
+
+
+def _perm_note(what: str, needed_permission: str) -> AgentRecord:
+    """A non-identity record flagging a read the token wasn't allowed to make."""
+    return AgentRecord(
+        id=f"github:coverage-note:forbidden:{what}",
+        source=Source.github,
+        type=IdentityType.automation,
+        display_name=f"[coverage] skipped {what} — token needs '{needed_permission}'",
+        owner_status=OwnerStatus.unknown,
+        raw_metadata={"note": "permission", "needed": needed_permission, "resource": what},
+    )
 
 
 def _coverage_note(total_repos: int) -> AgentRecord:
