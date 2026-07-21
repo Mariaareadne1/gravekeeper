@@ -255,11 +255,69 @@ function SummaryBar({
           <>Nothing looks abandoned here.</>
         )}
       </h1>
+      {zombies > 0 && <EstimatedWaste zombies={zombies} />}
       <div className="mt-4 flex flex-wrap gap-6 text-sm">
         <Stat n={total} label="identities found" />
         <Stat n={zombies} label="zombie candidates" tone="rot" />
         <Stat n={healthy} label="look healthy" tone="zombie" />
       </div>
+    </div>
+  );
+}
+
+// Default assumed monthly cost of one abandoned identity — a blend of idle
+// resource spend and risk-weighted exposure. Deliberately a knob the viewer can
+// turn, because we can't see anyone's real bill.
+const DEFAULT_COST_PER_MONTH = 50;
+
+const USD = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
+export function estimateAnnualWaste(zombies: number, costPerMonth: number): number {
+  const rate = Number.isFinite(costPerMonth) && costPerMonth > 0 ? costPerMonth : 0;
+  return zombies * rate * 12;
+}
+
+// An honest, adjustable "this is costing you money" estimate. Not a measured bill —
+// a transparent `candidates × assumed cost × 12`, with the assumption on display.
+function EstimatedWaste({ zombies }: { zombies: number }) {
+  const [costPerMonth, setCostPerMonth] = useState(DEFAULT_COST_PER_MONTH);
+  const annual = estimateAnnualWaste(zombies, costPerMonth);
+
+  return (
+    <div className="mt-4 rounded-xl border border-rot/30 bg-rot/10 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <div>
+          <div className="font-display text-2xl font-bold text-rot sm:text-3xl">
+            ≈ {USD.format(annual)}/yr
+          </div>
+          <div className="text-sm text-dusk">estimated waste &amp; exposure from abandoned agents</div>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-dusk">
+          <span>Assume</span>
+          <span className="flex items-center rounded-md border border-zombie-light/40 bg-surface px-2 py-1 text-ink">
+            <span aria-hidden="true">$</span>
+            <input
+              type="number"
+              min={0}
+              step={5}
+              value={costPerMonth}
+              onChange={(e) => setCostPerMonth(e.target.valueAsNumber)}
+              aria-label="Assumed monthly cost per abandoned identity, in dollars"
+              className="w-14 bg-transparent text-right tabular-nums outline-none"
+            />
+          </span>
+          <span>/identity/mo</span>
+        </label>
+      </div>
+      <p className="mt-2 text-xs text-dusk">
+        An estimate, not your bill: {zombies} candidate{zombies === 1 ? "" : "s"} ×{" "}
+        {USD.format(Number.isFinite(costPerMonth) && costPerMonth > 0 ? costPerMonth : 0)}/mo of idle
+        spend and risk exposure × 12 months. Adjust the rate to match your environment.
+      </p>
     </div>
   );
 }

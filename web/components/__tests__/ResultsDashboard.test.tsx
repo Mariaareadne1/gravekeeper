@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { AgentRecord, Finding, ScanResult } from "@/lib/types";
-import ResultsDashboard from "../ResultsDashboard";
+import ResultsDashboard, { estimateAnnualWaste } from "../ResultsDashboard";
 
 // Keep the real ApiError / helpers and only stub the network writes.
 vi.mock("@/lib/api", async (importOriginal) => {
@@ -113,5 +113,37 @@ describe("ResultsDashboard", () => {
     // Optimistic change reverted: the row badge is back to "keep", not "review".
     expect(screen.getByText("keep")).toBeInTheDocument();
     expect(screen.queryByText("review")).not.toBeInTheDocument();
+  });
+
+  it("shows an estimated annual waste for the zombie candidates", () => {
+    render(<ResultsDashboard initial={makeScan()} />);
+    // 1 candidate x $50/mo x 12 = $600/yr at the default assumption.
+    expect(screen.getByText(/\$600\/yr/)).toBeInTheDocument();
+  });
+
+  it("recomputes the estimate when the cost assumption changes", async () => {
+    const user = userEvent.setup();
+    render(<ResultsDashboard initial={makeScan()} />);
+
+    const rate = screen.getByLabelText(/assumed monthly cost per abandoned identity/i);
+    await user.clear(rate);
+    await user.type(rate, "100");
+
+    // 1 candidate x $100/mo x 12 = $1,200/yr.
+    expect(screen.getByText(/\$1,200\/yr/)).toBeInTheDocument();
+    expect(screen.queryByText(/\$600\/yr/)).not.toBeInTheDocument();
+  });
+});
+
+describe("estimateAnnualWaste", () => {
+  it("multiplies candidates by monthly cost by 12", () => {
+    expect(estimateAnnualWaste(16, 50)).toBe(9600);
+    expect(estimateAnnualWaste(1, 100)).toBe(1200);
+  });
+
+  it("treats a missing or non-positive rate as zero", () => {
+    expect(estimateAnnualWaste(10, NaN)).toBe(0);
+    expect(estimateAnnualWaste(10, 0)).toBe(0);
+    expect(estimateAnnualWaste(10, -5)).toBe(0);
   });
 });
