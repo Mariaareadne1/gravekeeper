@@ -227,7 +227,7 @@ def _page_cap_note(scanned: int) -> AgentRecord:
     return AgentRecord(
         id="gcp:coverage-note:pagination",
         source=Source.gcp,
-        type=IdentityType.automation,
+        type=IdentityType.coverage_note,
         display_name=f"[coverage] stopped after {_MAX_PAGES} pages of serviceAccounts",
         owner_status=OwnerStatus.unknown,
         raw_metadata={"scanned": scanned, "max_pages": _MAX_PAGES, "note": "page cap"},

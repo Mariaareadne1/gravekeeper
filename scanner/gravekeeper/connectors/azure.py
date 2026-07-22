@@ -283,7 +283,7 @@ def _signins_note() -> AgentRecord:
     return AgentRecord(
         id="azure:coverage-note:signins",
         source=Source.azure,
-        type=IdentityType.automation,
+        type=IdentityType.coverage_note,
         display_name="[coverage] sign-in logs unavailable — last_activity unknown",
         owner_status=OwnerStatus.unknown,
         raw_metadata={
@@ -297,7 +297,7 @@ def _page_cap_note(scanned: int) -> AgentRecord:
     return AgentRecord(
         id="azure:coverage-note:page-cap",
         source=Source.azure,
-        type=IdentityType.automation,
+        type=IdentityType.coverage_note,
         display_name=f"[coverage] stopped after {_MAX_PAGES} pages of servicePrincipals",
         owner_status=OwnerStatus.unknown,
         raw_metadata={"scanned": scanned, "max_pages": _MAX_PAGES, "note": "page cap"},

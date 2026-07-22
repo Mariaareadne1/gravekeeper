@@ -202,7 +202,7 @@ def _perm_note(what: str, needed_permission: str) -> AgentRecord:
     return AgentRecord(
         id=f"github:coverage-note:forbidden:{what}",
         source=Source.github,
-        type=IdentityType.automation,
+        type=IdentityType.coverage_note,
         display_name=f"[coverage] skipped {what} — token needs '{needed_permission}'",
         owner_status=OwnerStatus.unknown,
         raw_metadata={"note": "permission", "needed": needed_permission, "resource": what},
@@ -213,7 +213,7 @@ def _coverage_note(total_repos: int) -> AgentRecord:
     return AgentRecord(
         id="github:coverage-note",
         source=Source.github,
-        type=IdentityType.automation,
+        type=IdentityType.coverage_note,
         display_name=f"[coverage] scanned first {_MAX_REPOS} of {total_repos} repos",
         owner_status=OwnerStatus.unknown,
         raw_metadata={"scanned": _MAX_REPOS, "total": total_repos, "note": "deploy-key cap"},

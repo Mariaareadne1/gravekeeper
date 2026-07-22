@@ -115,6 +115,17 @@ describe("ResultsDashboard", () => {
     expect(screen.queryByText("review")).not.toBeInTheDocument();
   });
 
+  it("shows a coverage-notes banner and does not score the notes as findings", () => {
+    const scan = makeScan();
+    scan.coverage_notes = ["[coverage] skipped deploy keys on 25 repo(s) — token needs admin"];
+    render(<ResultsDashboard initial={scan} />);
+
+    expect(screen.getByRole("note")).toHaveTextContent(/partial coverage/i);
+    expect(screen.getByText(/skipped deploy keys on 25 repo/i)).toBeInTheDocument();
+    // The note is informational, not counted as a zombie: still 1 candidate.
+    expect(screen.getByRole("heading", { name: /1 agents look abandoned/i })).toBeInTheDocument();
+  });
+
   it("shows an estimated annual waste for the zombie candidates", () => {
     render(<ResultsDashboard initial={makeScan()} />);
     // 1 candidate x $50/mo x 12 = $600/yr at the default assumption.

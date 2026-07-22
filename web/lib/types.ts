@@ -93,6 +93,9 @@ export interface ScanResult {
   zombie_candidates: number;
   findings: Finding[];
   records: AgentRecord[];
+  // Honest notes about what the scan could not read (missing permissions, capped
+  // pagination). Not identities — shown as a banner, never scored.
+  coverage_notes?: string[];
 }
 
 export interface ScanSummary {

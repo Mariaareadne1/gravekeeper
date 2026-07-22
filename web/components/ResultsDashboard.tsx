@@ -114,6 +114,10 @@ export default function ResultsDashboard({ initial }: { initial: ScanResult }) {
           total={scan.total_identities}
         />
 
+        {scan.coverage_notes && scan.coverage_notes.length > 0 && (
+          <CoverageNotes notes={scan.coverage_notes} />
+        )}
+
         <div
           ref={filterGroupRef}
           role="group"
@@ -317,6 +321,31 @@ function EstimatedWaste({ zombies }: { zombies: number }) {
         An estimate, not your bill: {zombies} candidate{zombies === 1 ? "" : "s"} ×{" "}
         {USD.format(Number.isFinite(costPerMonth) && costPerMonth > 0 ? costPerMonth : 0)}/mo of idle
         spend and risk exposure × 12 months. Adjust the rate to match your environment.
+      </p>
+    </div>
+  );
+}
+
+// What the scan honestly could NOT read — a permission gap or a pagination cap.
+// Informational (not a finding): shown so partial coverage is never mistaken for
+// a clean bill of health.
+function CoverageNotes({ notes }: { notes: string[] }) {
+  return (
+    <div
+      role="note"
+      className="mt-4 rounded-xl border border-zombie-light/30 bg-zombie-wash/50 p-4"
+    >
+      <div className="flex items-center gap-2 text-sm font-semibold text-zombie-light">
+        <span aria-hidden="true">◐</span> Partial coverage — some things weren&apos;t read
+      </div>
+      <ul className="mt-2 space-y-1 text-sm text-dusk">
+        {notes.map((n) => (
+          <li key={n}>{n.replace(/^\[coverage\]\s*/, "")}</li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs text-dusk">
+        These aren&apos;t findings — they&apos;re gaps in what the scan could see. Grant the
+        listed permission and re-scan for a complete picture.
       </p>
     </div>
   );

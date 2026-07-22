@@ -27,6 +27,9 @@ class IdentityType(str, Enum):
     oauth_app = "oauth_app"
     automation = "automation"
     agent = "agent"
+    # Not a real identity — a connector's honest note about what it could NOT read
+    # (a permission gap, a pagination cap). Never scored or counted as an identity.
+    coverage_note = "coverage_note"
 
 
 class OwnerStatus(str, Enum):
@@ -145,3 +148,7 @@ class ScanResult(BaseModel):
     findings: list[Finding] = Field(default_factory=list)
     # Records are carried alongside findings so the UI can render context.
     records: list[AgentRecord] = Field(default_factory=list)
+    # Honest, human-readable notes about what the scan could NOT see (missing
+    # permissions, capped pagination). Not identities — surfaced as a banner, never
+    # scored. Keeps "we didn't look everywhere" visible instead of silently missing.
+    coverage_notes: list[str] = Field(default_factory=list)
